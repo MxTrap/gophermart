@@ -52,28 +52,43 @@ func (s JwtService) GetUserIdFromRefreshToken(token entity.Token) (int64, error)
 	return userId, nil
 }
 
-func (s JwtService) Validate(token entity.Token) error {
+func (s JwtService) Parse(token entity.Token) (int64, error) {
 	parsedToken, err := jwt.Parse(string(token), func(token *jwt.Token) (any, error) {
 		return []byte(s.secretKey), nil
 	})
 
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	if !parsedToken.Valid {
-		return common.ErrInvalidToken
+		return 0, common.ErrInvalidToken
 	}
 
 	expTime, err := parsedToken.Claims.GetExpirationTime()
 
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	if expTime.Unix() < time.Now().Unix() {
-		return common.ErrInvalidToken
+		return 0, common.ErrInvalidToken
 	}
 
-	return nil
+	claims, ok := parsedToken.Claims.(jwt.MapClaims)
+	if !ok {
+		return 0, common.ErrInvalidToken
+	}
+	uid, ok := claims["uid"]
+	if !ok {
+		return 0, common.ErrInvalidToken
+	}
+
+	fuid, ok := uid.(float64)
+
+	if !ok {
+		return 0, common.ErrInvalidToken
+	}
+
+	return int64(fuid), nil
 }

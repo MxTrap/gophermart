@@ -2,34 +2,40 @@ package routes
 
 import (
 	"context"
+	"fmt"
 	"net/http"
-
-	"github.com/MxTrap/gophermart/internal/gophermart/entity"
 
 	"github.com/go-chi/chi/v5"
 )
 
 type orderService interface {
-	Login(ctx context.Context, user entity.User) (entity.Tokens, error)
-	RegisterNewUser(ctx context.Context, user entity.User) (entity.Tokens, error)
+	SaveOrder(ctx context.Context, order string) error
 }
 
 type orderHandler struct {
-	service authService
+	service orderService
 }
 
 type authMiddleware interface {
 	Validate(next http.Handler) http.Handler
 }
 
-func NewOrderHandler(service authService, middleware authMiddleware) func(chi.Router) {
-	h := &orderHandler{service: service}
+func NewOrdersHandler(middleware authMiddleware) func(chi.Router) {
+	h := &orderHandler{}
 	return func(r chi.Router) {
-		r.Use(middleware.Validate)
-		r.Post("/order", h.OrderHandler)
+		r.Route("/orders", func(r chi.Router) {
+			r.Use(middleware.Validate)
+			r.Post("/", h.SaveOrderHandler)
+		})
+
 	}
 }
 
-func (h *orderHandler) OrderHandler(w http.ResponseWriter, r *http.Request) {
-
+func (h *orderHandler) SaveOrderHandler(w http.ResponseWriter, r *http.Request) {
+	userId := r.Header.Get("UserId")
+	if userId == "" {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	fmt.Println(userId)
 }

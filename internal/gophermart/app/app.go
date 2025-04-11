@@ -45,8 +45,9 @@ func NewApp(ctx context.Context, log *logger.Logger, cfg *config.Config) (*App, 
 	httpController := http.NewController(cfg.HTTP.GetAddress())
 	httpController.RegisterMiddlewares(middlewares.LoggerMiddleware(log))
 	authHandler := handlers.NewAuthHandler(authService)
+	ordersHandler := handlers.NewOrdersHandler(middlewares.NewAuhtorizationMiddleware(jwtService))
 
-	httpController.AddHandler("/user", authHandler)
+	httpController.AddHandler("/user", authHandler, ordersHandler)
 
 	return &App{pgStorage: storage, httpController: httpController}, nil
 }

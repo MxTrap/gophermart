@@ -148,7 +148,7 @@ func (s *AuthService) RegisterNewUser(ctx context.Context, user entity.User) (en
 		log.Error("failed to save user", err)
 		return tokens, common.ErrInternalError
 	}
-
+	user.Id = id
 	tokens, err = s.generateTokens(user)
 	if err != nil {
 		log.Error("failed to generate tokens", err)
@@ -186,7 +186,7 @@ func (s *AuthService) Login(ctx context.Context, user entity.User) (entity.Token
 		return tokens, common.ErrInvalidCredentials
 	}
 
-	tokens, err = s.generateTokens(user)
+	tokens, err = s.generateTokens(existingUser)
 	if err != nil {
 		log.Error("failed to generate tokens", err)
 		return tokens, common.ErrInternalError
