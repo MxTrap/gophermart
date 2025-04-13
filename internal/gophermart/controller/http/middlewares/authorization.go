@@ -1,10 +1,10 @@
 package middlewares
 
 import (
-	"fmt"
+	"context"
 	"net/http"
-	"strings"
 
+	"github.com/MxTrap/gophermart/internal/gophermart/common"
 	"github.com/MxTrap/gophermart/internal/gophermart/entity"
 )
 
@@ -26,23 +26,19 @@ func (m *AuhtorizationMiddleware) Validate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			w.WriteHeader(http.StatusUnauthorized)
+			http.Error(w, common.ErrInvalidCredentials.Error(), http.StatusUnauthorized)
 			return
 		}
 
-		const tokenType = "Bearer"
-		if strings.Index(authHeader, tokenType) == -1 {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		userId, err := m.validator.Parse(entity.Token(authHeader[len(tokenType)+1:]))
+		userId, err := m.validator.Parse(entity.Token(authHeader))
 		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
+			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		r.Header.Add("UserId", fmt.Sprintf("%d", userId))
+		ctx := context.WithValue(r.Context(), "UserId", userId)
+		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)
+
 	})
 }

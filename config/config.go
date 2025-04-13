@@ -2,81 +2,33 @@ package config
 
 import (
 	"flag"
-	"fmt"
-	"os"
-	"time"
 
-	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/caarlos0/env"
 )
 
 type Config struct {
-	Env       string         `yaml:"env" env-default:"local"`
-	HTTP      HTTPConfig     `yaml:"http"`
-	Postgres  PostgresConfig `yaml:"postgres"`
-	Token     Token          `yaml:"token"`
-	JWTSecret string         `yaml:"jwt_secret"`
+	HTTPAdress     string `env:"RUN_ADDRESS"`
+	DatabaseDSN    string `env:"DATABASE_URI"`
+	AccrualAddress string `env:"ACCRUAL_SYSTEM_ADDRESS"`
 }
 
-type HTTPConfig struct {
-	Host    string        `yaml:"host"`
-	Port    int           `yaml:"port"`
-	Timeout time.Duration `yaml:"timeout"`
-}
-
-func (cfg HTTPConfig) GetAddress() string {
-	return fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
-}
-
-type PostgresConfig struct {
-	Host          string `yaml:"host"`
-	Port          int    `yaml:"port"`
-	User          string `yaml:"user"`
-	Password      string `yaml:"password"`
-	Database      string `yaml:"database"`
-	MigrationPath string `yaml:"migration_path"`
-}
-
-func (cfg PostgresConfig) GetConnectionString() string {
-	return fmt.Sprintf(
-		"postgres://%s:%s@%s:%d/%s?sslmode=disable",
-		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Database,
-	)
-}
-
-type Token struct {
-	MaxCount int8 `yaml:"max_count"`
-	TTL      struct {
-		Access  time.Duration `yaml:"access" env-default:"1h"`
-		Refresh time.Duration `yaml:"refresh" env-default:"60h"`
-	} `yaml:"ttl"`
-}
-
-func fetchConfigPath() string {
-	var res string
-	flag.StringVar(&res, "config", "", "path to file")
+func NewConfig() (*Config, error) {
+	httpAddr := flag.String("a", "", "host and port http")
+	databaseDSN := flag.String("d", "", "database DSN")
+	accrualAddr := flag.String("r", "", "address of the accrual calculation system")
 	flag.Parse()
 
-	if res == "" {
-		res = os.Getenv("CONFIG_PATH")
-	}
-	return res
-}
-
-func NewConfig() *Config {
-
-	configPath := fetchConfigPath()
-
-	if configPath == "" {
-		panic("Config path is empty")
+	cfg := &Config{
+		HTTPAdress:     *httpAddr,
+		DatabaseDSN:    *databaseDSN,
+		AccrualAddress: *accrualAddr,
 	}
 
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		panic("File is not exist")
+	err := env.Parse(cfg)
+
+	if err != nil {
+		return nil, err
 	}
 
-	var cfg Config
-	if err := cleanenv.ReadConfig(configPath, &cfg); err != nil {
-		panic("Failed to read config: " + err.Error())
-	}
-	return &cfg
+	return cfg, nil
 }

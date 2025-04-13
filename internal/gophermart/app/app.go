@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"time"
 
 	"github.com/MxTrap/gophermart/config"
 
@@ -22,7 +23,7 @@ type App struct {
 }
 
 func NewApp(ctx context.Context, log *logger.Logger, cfg *config.Config) (*App, error) {
-	storage, err := postgres.NewPostgresStorage(ctx, cfg.Postgres.GetConnectionString())
+	storage, err := postgres.NewPostgresStorage(ctx, cfg.DatabaseDSN)
 	if err != nil {
 		return nil, err
 	}
@@ -39,10 +40,20 @@ func NewApp(ctx context.Context, log *logger.Logger, cfg *config.Config) (*App, 
 	tokenRepo := token_repo.NewTokenRepo(storage.Pool)
 	userRepo := user_repo.NewUserRepository(storage.Pool)
 
-	jwtService := services.NewJWTService(cfg.JWTSecret)
-	authService := services.NewAuthService(log, userRepo, tokenRepo, jwtService, services.TokenConfig(cfg.Token))
+	jwtService := services.NewJWTService("very secret")
+	tokenCfg := services.TokenConfig{
+		MaxCount: 10,
+		TTL: struct {
+			Access  time.Duration
+			Refresh time.Duration
+		}{
+			Access:  15 * time.Minute,
+			Refresh: 15 * time.Hour,
+		},
+	}
+	authService := services.NewAuthService(log, userRepo, tokenRepo, jwtService, tokenCfg)
 
-	httpController := http.NewController(cfg.HTTP.GetAddress())
+	httpController := http.NewController(cfg.HTTPAdress)
 	httpController.RegisterMiddlewares(middlewares.LoggerMiddleware(log))
 	authHandler := handlers.NewAuthHandler(authService)
 	ordersHandler := handlers.NewOrdersHandler(middlewares.NewAuhtorizationMiddleware(jwtService))

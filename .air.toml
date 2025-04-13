@@ -4,7 +4,8 @@ tmp_dir = "tmp"
 
 [build]
 args_bin = [
-    "-config=/Users/mxtrap/GolandProjects/gophermart/config/config_local.yaml",
+    "-d=postgres://postgres:admin@localhost:5432/gophermart?sslmode=disable",
+    "-a=localhost:8080",
 ]
 bin = "./tmp/main"
 cmd = "go build -o ./tmp/main ./cmd/gophermart/main.go"

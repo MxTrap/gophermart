@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/MxTrap/gophermart/internal/gophermart/controller/http/utils"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -32,8 +33,8 @@ func NewOrdersHandler(middleware authMiddleware) func(chi.Router) {
 }
 
 func (h *orderHandler) SaveOrderHandler(w http.ResponseWriter, r *http.Request) {
-	userId := r.Header.Get("UserId")
-	if userId == "" {
+	userId, err := utils.GetUserId(r.Context())
+	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}

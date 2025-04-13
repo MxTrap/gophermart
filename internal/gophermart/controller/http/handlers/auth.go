@@ -56,16 +56,8 @@ func (h *handler) sendTokens(w http.ResponseWriter, tokens entity.Tokens) {
 		Secure:   true,
 	}
 
-	res := TokenDto{
-		Token: string(tokens.AccessToken),
-	}
-	data, err := json.Marshal(res)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
 	http.SetCookie(w, cookie)
-	w.Write(data)
+	w.Header().Set("Authorization", string(tokens.AccessToken))
 	w.WriteHeader(http.StatusOK)
 	return
 }
@@ -73,7 +65,7 @@ func (h *handler) sendTokens(w http.ResponseWriter, tokens entity.Tokens) {
 func (h *handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	user, err := h.readUser(r)
 	if err != nil {
-		w.WriteHeader(http.StatusBadGateway)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	tokens, err := h.service.Login(r.Context(), user)
@@ -83,7 +75,7 @@ func (h *handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if errors.Is(err, common.ErrInvalidCredentials) {
-		w.WriteHeader(http.StatusUnauthorized)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	w.WriteHeader(http.StatusInternalServerError)
@@ -93,7 +85,7 @@ func (h *handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 func (h *handler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	user, err := h.readUser(r)
 	if err != nil {
-		w.WriteHeader(http.StatusBadGateway)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 

@@ -14,7 +14,10 @@ import (
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	log := logger.NewLogger()
-	cfg := config.NewConfig()
+	cfg, err := config.NewConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
 	app, err := app.NewApp(ctx, log, cfg)
 	if err != nil {
 		log.Fatal(err)

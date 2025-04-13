@@ -10,6 +10,7 @@ type Logger struct {
 
 func NewLogger() *Logger {
 	logger, _ := zap.NewProduction()
+	logger = logger.WithOptions(zap.WithCaller(false), zap.AddStacktrace(zap.FatalLevel))
 	sugar := logger.Sugar()
 	return &Logger{
 		sugar,
