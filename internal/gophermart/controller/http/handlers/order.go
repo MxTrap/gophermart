@@ -3,14 +3,16 @@ package routes
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/MxTrap/gophermart/internal/gophermart/controller/http/utils"
+	"github.com/MxTrap/gophermart/internal/gophermart/entity"
 	"github.com/go-chi/chi/v5"
 )
 
 type orderService interface {
-	SaveOrder(ctx context.Context, order string) error
+	SaveOrder(ctx context.Context, order entity.Order) error
 }
 
 type orderHandler struct {
@@ -21,7 +23,7 @@ type authMiddleware interface {
 	Validate(next http.Handler) http.Handler
 }
 
-func NewOrdersHandler(middleware authMiddleware) func(chi.Router) {
+func NewOrdersHandler(middleware authMiddleware, service orderService) func(chi.Router) {
 	h := &orderHandler{}
 	return func(r chi.Router) {
 		r.Route("/orders", func(r chi.Router) {
@@ -38,5 +40,10 @@ func (h *orderHandler) SaveOrderHandler(w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	fmt.Println(userID)
+	body, err := io.ReadAll(r.Body)
+
+	fmt.Print(string(body))
+
+	h.service.SaveOrder(r.Context(), entity.Order{UserID: userID})
+
 }

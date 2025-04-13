@@ -1,7 +1,7 @@
 package entity
 
 type Order struct {
-	userID     int64
+	UserID     int64
 	Number     string
 	Status     string
 	Accrual    int

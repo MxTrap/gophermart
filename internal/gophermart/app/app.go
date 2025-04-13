@@ -41,11 +41,13 @@ func NewApp(ctx context.Context, log *logger.Logger, cfg *config.Config) (*App, 
 	jwtService := services.NewJWTService("very secret")
 
 	authService := services.NewAuthService(log, userRepo, jwtService, 15*time.Minute)
+	accrualService := services.NewAccrualService(log, cfg.AccrualAddress)
+	orderService := services.NewOrderService(accrualService)
 
 	httpController := http.NewController(cfg.HTTPAdress)
 	httpController.RegisterMiddlewares(middlewares.LoggerMiddleware(log))
 	authHandler := handlers.NewAuthHandler(authService)
-	ordersHandler := handlers.NewOrdersHandler(middlewares.NewAuhtorizationMiddleware(jwtService))
+	ordersHandler := handlers.NewOrdersHandler(middlewares.NewAuhtorizationMiddleware(jwtService), orderService)
 
 	httpController.AddHandler("/user", authHandler, ordersHandler)
 

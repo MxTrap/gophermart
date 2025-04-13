@@ -1,16 +1,24 @@
 package services
 
 import (
+	"context"
 	"strconv"
 
 	"github.com/MxTrap/gophermart/internal/gophermart/entity"
 )
 
-type OrderService struct {
+type accrualService interface {
+	GetAccrual(number string)
 }
 
-func NewOrderService() *OrderService {
-	return &OrderService{}
+type OrderService struct {
+	service accrualService
+}
+
+func NewOrderService(service accrualService) *OrderService {
+	return &OrderService{
+		service: service,
+	}
 }
 
 func (*OrderService) checkOrderNumber(number string) bool {
@@ -30,10 +38,12 @@ func (*OrderService) checkOrderNumber(number string) bool {
 
 }
 
-func (s *OrderService) SaveOrder(order entity.Order) error {
+func (s *OrderService) SaveOrder(ctx context.Context, order entity.Order) error {
 	if !s.checkOrderNumber(order.Number) {
 
 	}
+
+	s.service.GetAccrual(order.Number)
 
 	return nil
 }
