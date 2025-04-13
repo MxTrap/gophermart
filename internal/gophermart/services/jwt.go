@@ -23,7 +23,7 @@ func (s JwtService) GenerateAccessToken(user entity.User, ttl time.Duration) (en
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
-	claims["uid"] = user.Id
+	claims["uid"] = user.ID
 	claims["login"] = user.Login
 	claims["exp"] = time.Now().Add(ttl).Unix()
 

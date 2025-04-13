@@ -4,14 +4,14 @@ CREATE TABLE IF NOT EXISTS user (
     password TEXT NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_login ON users (login);
+CREATE INDEX IF NOT EXISTS idx_login ON user (login);
 
 CREATE TABLE IF NOT EXISTS balance (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
     balance NUMERIC(20, 2) NOT NULL,
     withdrawn NUMERIC(20, 2),
-    CONSTRAINT fk_balance_users FOREIGN KEY (user_id) REFERENCES users (id)
+    CONSTRAINT fk_balance_users FOREIGN KEY (user_id) REFERENCES user (id)
 );
 
 CREATE TABLE IF NOT EXISTS order_status (
@@ -34,5 +34,5 @@ CREATE TABLE IF NOT EXISTS order (
     status_id SMALLINT NOT NULL,
     accrual NUMERIC(20, 2),
     uploaded_at TIMESTAMPT,
-    CONSTRAINT fk_order_user FOREIGN KEY (user_id) REFERENCES users (id)
+    CONSTRAINT fk_order_user FOREIGN KEY (user_id) REFERENCES user (id)
 );

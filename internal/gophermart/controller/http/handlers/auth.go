@@ -51,7 +51,6 @@ func (h *handler) readUser(r *http.Request) (entity.User, error) {
 func (h *handler) sendTokens(w http.ResponseWriter, token entity.Token) {
 	w.Header().Set("Authorization", string(token))
 	w.WriteHeader(http.StatusOK)
-	return
 }
 
 func (h *handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +70,6 @@ func (h *handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusInternalServerError)
-
 }
 
 func (h *handler) RegisterHandler(w http.ResponseWriter, r *http.Request) {

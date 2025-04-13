@@ -79,7 +79,7 @@ func (s *AuthService) RegisterNewUser(ctx context.Context, user entity.User) (en
 		log.Error("failed to save user", err)
 		return token, common.ErrInternalError
 	}
-	user.Id = id
+	user.ID = id
 	token, err = s.jwtService.GenerateAccessToken(user, s.tokenTTL)
 	if err != nil {
 		log.Error("failed to generate tokens", err)
@@ -95,7 +95,7 @@ func (s *AuthService) Login(ctx context.Context, user entity.User) (entity.Token
 	var token entity.Token
 
 	existingUser, err := s.userRepo.FindUserByUsername(ctx, user.Login)
-	log.Info("Try to login with", existingUser.Id, existingUser.Login)
+	log.Info("Try to login with", existingUser.ID, existingUser.Login)
 	if err != nil {
 		if errors.Is(err, common.ErrUserNotFound) {
 			log.Info("user not found", err)
