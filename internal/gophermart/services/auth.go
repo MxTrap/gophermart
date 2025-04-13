@@ -112,7 +112,7 @@ func (s *AuthService) Login(ctx context.Context, user entity.User) (entity.Token
 		return token, common.ErrInvalidCredentials
 	}
 
-	token, err = s.jwtService.GenerateAccessToken(user, s.tokenTTL)
+	token, err = s.jwtService.GenerateAccessToken(existingUser, s.tokenTTL)
 	if err != nil {
 		log.Error("failed to generate tokens", err)
 		return token, common.ErrInternalError

@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS user (
     id SERIAL PRIMARY KEY,
     login TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL
@@ -6,10 +6,33 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE INDEX IF NOT EXISTS idx_login ON users (login);
 
-CREATE TABLE IF NOT EXISTS tokens (
+CREATE TABLE IF NOT EXISTS balance (
     id SERIAL PRIMARY KEY,
-    refresh_token TEXT UNIQUE,
-    expiration_time BIGINT,
-    user_id INT,
-    CONSTRAINT fk_tokens_users FOREIGN KEY (user_id) REFERENCES users (id)
+    user_id INT NOT NULL,
+    balance NUMERIC(20, 2) NOT NULL,
+    withdrawn NUMERIC(20, 2),
+    CONSTRAINT fk_balance_users FOREIGN KEY (user_id) REFERENCES users (id)
+);
+
+CREATE TABLE IF NOT EXISTS order_status (
+    id SMALLINT PRIMARY KEY,
+    status VARCHAR(15) UNIQUE
+);
+
+INSERT INTO
+    order_status
+VALUES
+    (1, "NEW"),
+    (2, "PROCESSING"),
+    (3, "INVALID"),
+    (4, "PROCESSED");
+
+CREATE TABLE IF NOT EXISTS order (
+    id BIGSERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    number TEXT UNIQUE NOT NULL,
+    status_id SMALLINT NOT NULL,
+    accrual NUMERIC(20, 2),
+    uploaded_at TIMESTAMPT,
+    CONSTRAINT fk_order_user FOREIGN KEY (user_id) REFERENCES users (id)
 );

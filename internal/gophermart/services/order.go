@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/MxTrap/gophermart/internal/gophermart/entity"
@@ -39,6 +40,7 @@ func (*OrderService) checkOrderNumber(number string) bool {
 }
 
 func (s *OrderService) SaveOrder(ctx context.Context, order entity.Order) error {
+	fmt.Println(order)
 	if !s.checkOrderNumber(order.Number) {
 
 	}

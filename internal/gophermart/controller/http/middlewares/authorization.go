@@ -35,7 +35,7 @@ func (m *AuhtorizationMiddleware) Validate(next http.Handler) http.Handler {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		ctx := context.WithValue(r.Context(), "userID", userID)
+		ctx := context.WithValue(r.Context(), "UserID", userID)
 		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)
