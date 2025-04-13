@@ -33,10 +33,10 @@ func NewOrdersHandler(middleware authMiddleware) func(chi.Router) {
 }
 
 func (h *orderHandler) SaveOrderHandler(w http.ResponseWriter, r *http.Request) {
-	userId, err := utils.GetUserId(r.Context())
+	userID, err := utils.GetUserID(r.Context())
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	fmt.Println(userId)
+	fmt.Println(userID)
 }

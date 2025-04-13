@@ -30,12 +30,12 @@ func (m *AuhtorizationMiddleware) Validate(next http.Handler) http.Handler {
 			return
 		}
 
-		userId, err := m.validator.Parse(entity.Token(authHeader))
+		userID, err := m.validator.Parse(entity.Token(authHeader))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		ctx := context.WithValue(r.Context(), "UserId", userId)
+		ctx := context.WithValue(r.Context(), "userID", userID)
 		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)

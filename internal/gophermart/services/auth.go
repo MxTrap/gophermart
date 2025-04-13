@@ -17,18 +17,18 @@ import (
 
 type tokenDeleter interface {
 	DeleteToken(ctx context.Context, token string) error
-	ClearTokens(ctx context.Context, userId int64) error
+	ClearTokens(ctx context.Context, userID int64) error
 }
 
 type tokenRepo interface {
-	GetTokens(ctx context.Context, userId int64) ([]entity.RefreshToken, error)
+	GetTokens(ctx context.Context, userID int64) ([]entity.RefreshToken, error)
 	SaveToken(ctx context.Context, token entity.RefreshToken) error
 	tokenDeleter
 }
 
 type userFinder interface {
 	FindUserByUsername(ctx context.Context, username string) (entity.User, error)
-	FindUserById(ctx context.Context, userId int64) (entity.User, error)
+	FindUserById(ctx context.Context, userID int64) (entity.User, error)
 }
 
 type userSaver interface {
@@ -42,8 +42,8 @@ type userRepo interface {
 
 type jwtService interface {
 	GenerateAccessToken(user entity.User, ttl time.Duration) (string, error)
-	GenerateRefreshToken(userId int64) string
-	GetUserIdFromRefreshToken(token entity.Token) (int64, error)
+	GenerateRefreshToken(userID int64) string
+	GetUserIDFromRefreshToken(token entity.Token) (int64, error)
 }
 
 type TokenConfig struct {
@@ -111,9 +111,9 @@ func (s AuthService) generateTokens(user entity.User) (entity.Tokens, error) {
 	return tokenPair, nil
 }
 
-func (s AuthService) saveRefreshToken(ctx context.Context, refreshToken entity.Token, userId int64) error {
+func (s AuthService) saveRefreshToken(ctx context.Context, refreshToken entity.Token, userID int64) error {
 	var token entity.RefreshToken
-	token.UserId = userId
+	token.UserID = userID
 	token.RefreshToken = refreshToken
 	token.ExpirationTime = time.Now().Add(s.tokenConfig.TTL.Refresh).Unix()
 
@@ -220,9 +220,9 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken entity.Token) (e
 
 	var tokens entity.Tokens
 
-	userId, err := s.jwtService.GetUserIdFromRefreshToken(refreshToken)
+	userID, err := s.jwtService.GetUserIDFromRefreshToken(refreshToken)
 
-	savedTokens, err := s.tokenRepo.GetTokens(ctx, userId)
+	savedTokens, err := s.tokenRepo.GetTokens(ctx, userID)
 	if err != nil {
 		log.Error("failed to get tokens", err)
 		if errors.Is(err, common.ErrUserNotFound) {
@@ -234,7 +234,7 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken entity.Token) (e
 
 	if len(savedTokens) > int(s.tokenConfig.MaxCount) {
 		errs.Go(func() error {
-			return s.tokenRepo.ClearTokens(ctx, userId)
+			return s.tokenRepo.ClearTokens(ctx, userID)
 		})
 	}
 
@@ -254,7 +254,7 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken entity.Token) (e
 		return tokens, common.ErrTokenHasExpired
 	}
 
-	user, err := s.userRepo.FindUserById(ctx, userId)
+	user, err := s.userRepo.FindUserById(ctx, userID)
 
 	if err != nil {
 		return tokens, err

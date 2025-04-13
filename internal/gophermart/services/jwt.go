@@ -39,17 +39,17 @@ func (s JwtService) GenerateAccessToken(user entity.User, ttl time.Duration) (st
 	return signedString, nil
 }
 
-func (s JwtService) GenerateRefreshToken(userId int64) string {
-	return fmt.Sprintf("%s-%d", uuid.New().String(), userId)
+func (s JwtService) GenerateRefreshToken(userID int64) string {
+	return fmt.Sprintf("%s-%d", uuid.New().String(), userID)
 }
 
-func (s JwtService) GetUserIdFromRefreshToken(token entity.Token) (int64, error) {
+func (s JwtService) GetUserIDFromRefreshToken(token entity.Token) (int64, error) {
 	index := strings.LastIndex(string(token), "_")
-	userId, err := strconv.ParseInt(string(token)[index:], 10, 64)
+	userID, err := strconv.ParseInt(string(token)[index:], 10, 64)
 	if err != nil {
 		return 0, err
 	}
-	return userId, nil
+	return userID, nil
 }
 
 func (s JwtService) Parse(token entity.Token) (int64, error) {

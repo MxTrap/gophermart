@@ -22,10 +22,10 @@ func NewTokenRepo(pool *pgxpool.Pool) *TokenRepo {
 
 const repoName = "postgres.TokenRepo."
 
-func (r TokenRepo) GetTokens(ctx context.Context, userId int64) ([]entity.RefreshToken, error) {
+func (r TokenRepo) GetTokens(ctx context.Context, userID int64) ([]entity.RefreshToken, error) {
 	const op = repoName + "GetTokens"
 	var tokens []entity.RefreshToken
-	rows, err := r.db.Query(ctx, selectTokensStmt, userId)
+	rows, err := r.db.Query(ctx, selectTokensStmt, userID)
 	if err != nil {
 		return tokens, storage.NewRepositoryError(op, err)
 	}
@@ -46,8 +46,8 @@ func (r TokenRepo) DeleteToken(ctx context.Context, token string) error {
 	return nil
 }
 
-func (r TokenRepo) ClearTokens(ctx context.Context, userId int64) error {
-	_, err := r.db.Exec(ctx, deleteAllTokensStmt, userId)
+func (r TokenRepo) ClearTokens(ctx context.Context, userID int64) error {
+	_, err := r.db.Exec(ctx, deleteAllTokensStmt, userID)
 	if err != nil {
 		return storage.NewRepositoryError(repoName+"ClearTokens", err)
 	}
@@ -55,7 +55,7 @@ func (r TokenRepo) ClearTokens(ctx context.Context, userId int64) error {
 }
 
 func (r *TokenRepo) SaveToken(ctx context.Context, token entity.RefreshToken) error {
-	_, err := r.db.Exec(ctx, insertTokenStmt, token.UserId, token.RefreshToken, token.ExpirationTime)
+	_, err := r.db.Exec(ctx, insertTokenStmt, token.UserID, token.RefreshToken, token.ExpirationTime)
 	if err != nil {
 		return storage.NewRepositoryError(repoName+"SaveToken", err)
 	}
