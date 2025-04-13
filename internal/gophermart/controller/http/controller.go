@@ -33,6 +33,7 @@ func (c *Controller) RegisterMiddlewares(middlewares ...func(http.Handler) http.
 func (c *Controller) AddHandler(path string, group ...func(chi.Router)) {
 	if val, ok := c.handlers[path]; ok {
 		val = append(val, group...)
+		c.handlers[path] = val
 		return
 	}
 	c.handlers[path] = group
