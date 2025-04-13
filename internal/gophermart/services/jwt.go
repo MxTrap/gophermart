@@ -1,16 +1,12 @@
 package services
 
 import (
-	"fmt"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/MxTrap/gophermart/internal/gophermart/common"
 	"github.com/MxTrap/gophermart/internal/gophermart/entity"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 )
 
 type JwtService struct {
@@ -23,7 +19,7 @@ func NewJWTService(secretKey string) *JwtService {
 	}
 }
 
-func (s JwtService) GenerateAccessToken(user entity.User, ttl time.Duration) (string, error) {
+func (s JwtService) GenerateAccessToken(user entity.User, ttl time.Duration) (entity.Token, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
@@ -36,20 +32,7 @@ func (s JwtService) GenerateAccessToken(user entity.User, ttl time.Duration) (st
 		return "", err
 	}
 
-	return signedString, nil
-}
-
-func (s JwtService) GenerateRefreshToken(userID int64) string {
-	return fmt.Sprintf("%s-%d", uuid.New().String(), userID)
-}
-
-func (s JwtService) GetUserIDFromRefreshToken(token entity.Token) (int64, error) {
-	index := strings.LastIndex(string(token), "_")
-	userID, err := strconv.ParseInt(string(token)[index:], 10, 64)
-	if err != nil {
-		return 0, err
-	}
-	return userID, nil
+	return entity.Token(signedString), nil
 }
 
 func (s JwtService) Parse(token entity.Token) (int64, error) {

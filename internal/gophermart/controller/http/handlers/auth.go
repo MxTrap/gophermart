@@ -14,8 +14,8 @@ import (
 )
 
 type authService interface {
-	Login(ctx context.Context, user entity.User) (entity.Tokens, error)
-	RegisterNewUser(ctx context.Context, user entity.User) (entity.Tokens, error)
+	Login(ctx context.Context, user entity.User) (entity.Token, error)
+	RegisterNewUser(ctx context.Context, user entity.User) (entity.Token, error)
 }
 
 type handler struct {
@@ -48,16 +48,8 @@ func (h *handler) readUser(r *http.Request) (entity.User, error) {
 	return user, nil
 }
 
-func (h *handler) sendTokens(w http.ResponseWriter, tokens entity.Tokens) {
-	cookie := &http.Cookie{
-		Name:     "refresh_token",
-		Value:    string(tokens.RefreshToken),
-		HttpOnly: true,
-		Secure:   true,
-	}
-
-	http.SetCookie(w, cookie)
-	w.Header().Set("Authorization", string(tokens.AccessToken))
+func (h *handler) sendTokens(w http.ResponseWriter, token entity.Token) {
+	w.Header().Set("Authorization", string(token))
 	w.WriteHeader(http.StatusOK)
 	return
 }

@@ -11,7 +11,6 @@ import (
 	"github.com/MxTrap/gophermart/internal/gophermart/controller/http/middlewares"
 	"github.com/MxTrap/gophermart/internal/gophermart/migrator"
 	"github.com/MxTrap/gophermart/internal/gophermart/repository/postgres"
-	token_repo "github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/token"
 	user_repo "github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/user"
 	"github.com/MxTrap/gophermart/internal/gophermart/services"
 	"github.com/MxTrap/gophermart/logger"
@@ -37,21 +36,11 @@ func NewApp(ctx context.Context, log *logger.Logger, cfg *config.Config) (*App, 
 		return nil, err
 	}
 
-	tokenRepo := token_repo.NewTokenRepo(storage.Pool)
 	userRepo := user_repo.NewUserRepository(storage.Pool)
 
 	jwtService := services.NewJWTService("very secret")
-	tokenCfg := services.TokenConfig{
-		MaxCount: 10,
-		TTL: struct {
-			Access  time.Duration
-			Refresh time.Duration
-		}{
-			Access:  15 * time.Minute,
-			Refresh: 15 * time.Hour,
-		},
-	}
-	authService := services.NewAuthService(log, userRepo, tokenRepo, jwtService, tokenCfg)
+
+	authService := services.NewAuthService(log, userRepo, jwtService, 15*time.Minute)
 
 	httpController := http.NewController(cfg.HTTPAdress)
 	httpController.RegisterMiddlewares(middlewares.LoggerMiddleware(log))
