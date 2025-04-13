@@ -1,3 +1,5 @@
+BEGIN TRANSACTION;
+
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     login TEXT NOT NULL UNIQUE,
@@ -14,13 +16,13 @@ CREATE TABLE IF NOT EXISTS balance (
     CONSTRAINT fk_balance_users FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
-CREATE TABLE IF NOT EXISTS order_status (
+CREATE TABLE IF NOT EXISTS order_statuses (
     id SMALLINT PRIMARY KEY,
     status VARCHAR(15) UNIQUE
 );
 
 INSERT INTO
-    order_status (id, status)
+    order_statuses (id, status)
 VALUES
     (1, 'NEW'),
     (2, 'PROCESSING'),
@@ -34,5 +36,8 @@ CREATE TABLE IF NOT EXISTS orders (
     status_id SMALLINT NOT NULL,
     accrual NUMERIC(20, 2),
     uploaded_at TIMESTAMP,
-    CONSTRAINT fk_order_user FOREIGN KEY (user_id) REFERENCES users (id)
+    CONSTRAINT fk_orders_users FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT fk_orders_order_statuses FOREIGN KEY (user_id) REFERENCES order_statuses (id)
 );
+
+COMMIT TRANSACTION;

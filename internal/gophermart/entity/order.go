@@ -1,9 +1,16 @@
 package entity
 
+const (
+	OrderNew        = "NEW"
+	OrderProcessing = "PROCESSING"
+	OrderInvalid    = "INVALID"
+	OrderProcessed  = "PROCESSED"
+)
+
 type Order struct {
 	UserID     int64
 	Number     string
 	Status     string
-	Accrual    int
-	UploadedAt int
+	Accrual    float32
+	UploadedAt int64
 }

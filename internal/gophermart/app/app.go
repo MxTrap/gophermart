@@ -11,8 +11,10 @@ import (
 	"github.com/MxTrap/gophermart/internal/gophermart/controller/http/middlewares"
 	"github.com/MxTrap/gophermart/internal/gophermart/migrator"
 	"github.com/MxTrap/gophermart/internal/gophermart/repository/postgres"
+	order_repo "github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/order"
 	user_repo "github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/user"
 	"github.com/MxTrap/gophermart/internal/gophermart/services"
+	"github.com/MxTrap/gophermart/internal/gophermart/usecase"
 	"github.com/MxTrap/gophermart/logger"
 )
 
@@ -37,12 +39,14 @@ func NewApp(ctx context.Context, log *logger.Logger, cfg *config.Config) (*App, 
 	}
 
 	userRepo := user_repo.NewUserRepository(storage.Pool)
+	orderRepo := order_repo.NewOrderRepository(storage.Pool)
 
 	jwtService := services.NewJWTService("very secret")
 
-	authService := services.NewAuthService(log, userRepo, jwtService, 15*time.Minute)
-	accrualService := services.NewAccrualService(log, cfg.AccrualAddress)
-	orderService := services.NewOrderService(accrualService)
+	accrualService := services.NewWorkerService(log, cfg.AccrualAddress)
+
+	authService := usecase.NewAuthService(log, userRepo, jwtService, 15*time.Minute)
+	orderService := usecase.NewOrderService(log, accrualService, orderRepo)
 
 	httpController := http.NewController(cfg.HTTPAdress)
 	httpController.RegisterMiddlewares(middlewares.LoggerMiddleware(log))

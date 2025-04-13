@@ -17,8 +17,13 @@ var (
 
 var (
 	ErrUsernameAlreadyExist = errors.New("user already exist")
-	ErrEmailAlreadyExist    = errors.New("user email already exist")
-	ErrRefreshTokenNotFound = errors.New("refresh token not found")
 	ErrUserNotFound         = errors.New("user not found")
 	ErrUserAlreadyExist     = errors.New("user already exist")
+)
+
+var (
+	ErrInvalidOrderNumber       = errors.New("invalid order number")
+	ErrOrderAlreadyExist        = errors.New("order number already exist")
+	ErrOrderRegisteredByAnother = errors.New("order registered by another user")
+	ErrNonExistentOrder         = errors.New("order does not exist")
 )
