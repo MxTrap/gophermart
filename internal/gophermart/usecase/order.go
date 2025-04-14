@@ -87,7 +87,7 @@ func (s *OrderService) SaveOrder(ctx context.Context, order entity.Order) error 
 
 	order.Status = accrualOrder.Status
 	order.Accrual = accrualOrder.Accrual
-	order.UploadedAt = time.Now().Unix()
+	order.UploadedAt = time.Now().UTC()
 
 	err = s.repo.SaveOrder(ctx, order)
 	if err != nil {

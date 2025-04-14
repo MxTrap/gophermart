@@ -1,5 +1,7 @@
 package entity
 
+import "time"
+
 const (
 	OrderNew        = "NEW"
 	OrderProcessing = "PROCESSING"
@@ -12,5 +14,5 @@ type Order struct {
 	Number     string
 	Status     string
 	Accrual    float32
-	UploadedAt int64
+	UploadedAt time.Time
 }

@@ -25,7 +25,7 @@ func (r *OrderRepository) SaveOrder(ctx context.Context, order entity.Order) err
 		order.UserID,
 		order.Number,
 		order.Status,
-		order.Status,
+		order.Accrual,
 		order.UploadedAt,
 	)
 
@@ -47,6 +47,7 @@ func (r *OrderRepository) FindOrder(ctx context.Context, number string) (entity.
 	return order, nil
 }
 
-func (*OrderRepository) UpdateOrder(ctx context.Context, order entity.Order) error {
-	return nil
+func (r *OrderRepository) UpdateOrder(ctx context.Context, order entity.Order) error {
+	_, err := r.db.Exec(ctx, updateStmt, order.Status, order.Accrual, order.Number)
+	return err
 }

@@ -45,7 +45,7 @@ func NewApp(ctx context.Context, log *logger.Logger, cfg *config.Config) (*App, 
 
 	accrualService := services.NewWorkerService(log, cfg.AccrualAddress)
 
-	authService := usecase.NewAuthService(log, userRepo, jwtService, 15*time.Minute)
+	authService := usecase.NewAuthService(log, userRepo, jwtService, 15*time.Hour)
 	orderService := usecase.NewOrderService(log, accrualService, orderRepo)
 
 	httpController := http.NewController(cfg.HTTPAdress)
