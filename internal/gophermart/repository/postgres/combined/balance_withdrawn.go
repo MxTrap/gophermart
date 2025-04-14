@@ -2,11 +2,12 @@ package combined
 
 import (
 	"context"
+	"errors"
 
 	"github.com/MxTrap/gophermart/internal/gophermart/common"
 	"github.com/MxTrap/gophermart/internal/gophermart/entity"
-	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -39,9 +40,11 @@ func (r *BalanceWithdrawnRepo) Withdraw(ctx context.Context, userID int64, withd
 	}
 
 	err = r.bRepo.Withdraw(ctx, &tx, userID, withdrawal.Sum)
+
 	if err != nil {
 		tx.Rollback(ctx)
-		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == "23514" {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23514" {
 			return common.ErrInsufficientBalance
 		}
 		return err

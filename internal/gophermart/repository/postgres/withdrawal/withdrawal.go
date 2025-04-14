@@ -20,6 +20,7 @@ func NewWithdrawnRepo(db *pgxpool.Pool) *WithdrawnRepo {
 
 func (r *WithdrawnRepo) GetAll(ctx context.Context, userID int64) ([]entity.Withdrawal, error) {
 	rows, err := r.db.Query(ctx, selectStmt, userID)
+	defer rows.Close()
 
 	if err != nil {
 		return nil, err
@@ -29,6 +30,6 @@ func (r *WithdrawnRepo) GetAll(ctx context.Context, userID int64) ([]entity.With
 }
 
 func (*WithdrawnRepo) Save(ctx context.Context, tx *pgx.Tx, userID int64, withdrawn entity.Withdrawal) error {
-	_, err := (*tx).Query(ctx, insertStmt, userID, withdrawn.Order, withdrawn.Sum, withdrawn.ProcessedAt)
+	_, err := (*tx).Exec(ctx, insertStmt, userID, withdrawn.Order, withdrawn.Sum, withdrawn.ProcessedAt)
 	return err
 }

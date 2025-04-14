@@ -36,6 +36,7 @@ func (r *OrderRepository) Save(ctx context.Context, order entity.Order) error {
 func (r *OrderRepository) Find(ctx context.Context, number string) (entity.Order, error) {
 	var order entity.Order
 	row, err := r.db.Query(ctx, selectByNumber, number)
+	defer row.Close()
 	if err != nil {
 		return order, nil
 	}
@@ -56,6 +57,7 @@ func (r *OrderRepository) Update(ctx context.Context, tx *pgx.Tx, order entity.O
 func (r *OrderRepository) GetAll(ctx context.Context, userID int64) ([]entity.Order, error) {
 	var orders []entity.Order
 	rows, err := r.db.Query(ctx, selectAllStmt, userID)
+	defer rows.Close()
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
