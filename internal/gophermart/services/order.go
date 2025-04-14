@@ -17,7 +17,7 @@ type storageService interface {
 type orderRepository interface {
 	Save(ctx context.Context, order entity.Order) error
 	Find(ctx context.Context, number string) (entity.Order, error)
-	GetAll(ctx context.Context, userId int64) ([]entity.Order, error)
+	GetAll(ctx context.Context, userID int64) ([]entity.Order, error)
 }
 
 type OrderService struct {
@@ -72,9 +72,9 @@ func (s *OrderService) SaveOrder(ctx context.Context, order entity.Order) error 
 	return nil
 }
 
-func (s *OrderService) GetAll(ctx context.Context, userId int64) ([]entity.Order, error) {
+func (s *OrderService) GetAll(ctx context.Context, userID int64) ([]entity.Order, error) {
 	log := s.log.With("op", "OrderService.GetAll")
-	orders, err := s.orderRepo.GetAll(ctx, userId)
+	orders, err := s.orderRepo.GetAll(ctx, userID)
 	if err != nil {
 		log.Error(err)
 		return orders, err

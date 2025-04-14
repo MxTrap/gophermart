@@ -13,7 +13,7 @@ import (
 )
 
 type withdrawer interface {
-	GetAll(ctx context.Context, userId int64) ([]entity.Withdrawal, error)
+	GetAll(ctx context.Context, userID int64) ([]entity.Withdrawal, error)
 }
 
 type withdrawalHandler struct {

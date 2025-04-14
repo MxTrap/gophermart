@@ -8,7 +8,7 @@ import (
 )
 
 type balanceRepo interface {
-	Get(ctx context.Context, userId int64) (entity.Balance, error)
+	Get(ctx context.Context, userID int64) (entity.Balance, error)
 }
 
 type BalanceService struct {
@@ -23,10 +23,10 @@ func NewBalanceService(log *logger.Logger, repo balanceRepo) *BalanceService {
 	}
 }
 
-func (s *BalanceService) Get(ctx context.Context, userId int64) (entity.Balance, error) {
+func (s *BalanceService) Get(ctx context.Context, userID int64) (entity.Balance, error) {
 	log := s.log.With("op", "BalanceService.Get")
 
-	balance, err := s.repo.Get(ctx, userId)
+	balance, err := s.repo.Get(ctx, userID)
 
 	if err != nil {
 		log.Error(err)

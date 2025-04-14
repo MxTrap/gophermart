@@ -13,7 +13,7 @@ type orderRepo interface {
 }
 
 type balanceRepo interface {
-	Increase(ctx context.Context, tx *pgx.Tx, userId int64, accrual float32) error
+	Increase(ctx context.Context, tx *pgx.Tx, userID int64, accrual float32) error
 }
 
 type OrderBalanceRepo struct {

@@ -16,11 +16,11 @@ import (
 )
 
 type balanceService interface {
-	Get(ctx context.Context, userId int64) (entity.Balance, error)
+	Get(ctx context.Context, userID int64) (entity.Balance, error)
 }
 
 type withdrawalService interface {
-	Withdraw(ctx context.Context, userId int64, withdrawal entity.Withdrawal) error
+	Withdraw(ctx context.Context, userID int64, withdrawal entity.Withdrawal) error
 }
 
 type balanceHandler struct {

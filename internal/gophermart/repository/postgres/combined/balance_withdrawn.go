@@ -11,11 +11,11 @@ import (
 )
 
 type withdrawn interface {
-	Save(ctx context.Context, tx *pgx.Tx, userId int64, withdrawn entity.Withdrawal) error
+	Save(ctx context.Context, tx *pgx.Tx, userID int64, withdrawn entity.Withdrawal) error
 }
 
 type balance interface {
-	Withdraw(ctx context.Context, tx *pgx.Tx, userId int64, sum float32) error
+	Withdraw(ctx context.Context, tx *pgx.Tx, userID int64, sum float32) error
 }
 
 type BalanceWithdrawnRepo struct {
@@ -32,13 +32,13 @@ func NewBalanceWithdrawnRepo(db *pgxpool.Pool, bRepo balance, wRepo withdrawn) *
 	}
 }
 
-func (r *BalanceWithdrawnRepo) Withdraw(ctx context.Context, userId int64, withdrawal entity.Withdrawal) error {
+func (r *BalanceWithdrawnRepo) Withdraw(ctx context.Context, userID int64, withdrawal entity.Withdrawal) error {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return err
 	}
 
-	err = r.bRepo.Withdraw(ctx, &tx, userId, withdrawal.Sum)
+	err = r.bRepo.Withdraw(ctx, &tx, userID, withdrawal.Sum)
 	if err != nil {
 		tx.Rollback(ctx)
 		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == "23514" {
@@ -47,7 +47,7 @@ func (r *BalanceWithdrawnRepo) Withdraw(ctx context.Context, userId int64, withd
 		return err
 	}
 
-	err = r.wRepo.Save(ctx, &tx, userId, withdrawal)
+	err = r.wRepo.Save(ctx, &tx, userID, withdrawal)
 	if err != nil {
 		tx.Rollback(ctx)
 		return err

@@ -53,9 +53,9 @@ func (r *OrderRepository) Update(ctx context.Context, tx *pgx.Tx, order entity.O
 	return err
 }
 
-func (r *OrderRepository) GetAll(ctx context.Context, userId int64) ([]entity.Order, error) {
+func (r *OrderRepository) GetAll(ctx context.Context, userID int64) ([]entity.Order, error) {
 	var orders []entity.Order
-	rows, err := r.db.Query(ctx, selectAllStmt, userId)
+	rows, err := r.db.Query(ctx, selectAllStmt, userID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil

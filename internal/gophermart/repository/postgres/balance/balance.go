@@ -24,13 +24,13 @@ func (*BalanceRepository) Increase(ctx context.Context, tx *pgx.Tx, userID int64
 	return err
 }
 
-func (*BalanceRepository) Withdraw(ctx context.Context, tx *pgx.Tx, userId int64, sum float32) error {
-	_, err := (*tx).Exec(ctx, withdrawalStmt, sum, userId)
+func (*BalanceRepository) Withdraw(ctx context.Context, tx *pgx.Tx, userID int64, sum float32) error {
+	_, err := (*tx).Exec(ctx, withdrawalStmt, sum, userID)
 	return err
 }
 
-func (r *BalanceRepository) Get(ctx context.Context, userId int64) (entity.Balance, error) {
-	row, err := r.db.Query(ctx, selectStmt, userId)
+func (r *BalanceRepository) Get(ctx context.Context, userID int64) (entity.Balance, error) {
+	row, err := r.db.Query(ctx, selectStmt, userID)
 
 	if err != nil {
 		return entity.Balance{}, err

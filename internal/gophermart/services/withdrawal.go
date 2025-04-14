@@ -11,11 +11,11 @@ import (
 )
 
 type withdrawer interface {
-	Withdraw(ctx context.Context, userId int64, withdrawal entity.Withdrawal) error
+	Withdraw(ctx context.Context, userID int64, withdrawal entity.Withdrawal) error
 }
 
 type getter interface {
-	GetAll(ctx context.Context, userId int64) ([]entity.Withdrawal, error)
+	GetAll(ctx context.Context, userID int64) ([]entity.Withdrawal, error)
 }
 
 type WithdrawalService struct {
@@ -32,14 +32,14 @@ func NewWithdrawalService(log *logger.Logger, withdrawer withdrawer, getter gett
 	}
 }
 
-func (s *WithdrawalService) Withdraw(ctx context.Context, userId int64, withdrawal entity.Withdrawal) error {
+func (s *WithdrawalService) Withdraw(ctx context.Context, userID int64, withdrawal entity.Withdrawal) error {
 	log := s.log.With("op", "WithdrawalService.Withdraw")
 	if !utils.IsOrderNumberValid(withdrawal.Order) {
 		return common.ErrInvalidOrderNumber
 	}
 
 	withdrawal.ProcessedAt = time.Now().UTC()
-	err := s.withdrawer.Withdraw(ctx, userId, withdrawal)
+	err := s.withdrawer.Withdraw(ctx, userID, withdrawal)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -48,11 +48,11 @@ func (s *WithdrawalService) Withdraw(ctx context.Context, userId int64, withdraw
 	return nil
 }
 
-func (s *WithdrawalService) GetAll(ctx context.Context, userId int64) ([]entity.Withdrawal, error) {
+func (s *WithdrawalService) GetAll(ctx context.Context, userID int64) ([]entity.Withdrawal, error) {
 	log := s.log.With("op", "WithdrawalService.GetAll")
 	var withdrawals []entity.Withdrawal
 
-	withdrawals, err := s.getter.GetAll(ctx, userId)
+	withdrawals, err := s.getter.GetAll(ctx, userID)
 	if err != nil {
 		log.Error(err)
 		return withdrawals, err

@@ -14,7 +14,7 @@ import (
 
 type userFinder interface {
 	FindUserByUsername(ctx context.Context, username string) (entity.User, error)
-	FindUserById(ctx context.Context, userID int64) (entity.User, error)
+	FindUserByID(ctx context.Context, userID int64) (entity.User, error)
 }
 
 type userSaver interface {
