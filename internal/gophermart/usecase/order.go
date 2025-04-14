@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"strconv"
 	"time"
 
@@ -78,13 +78,19 @@ func (s *OrderService) SaveOrder(ctx context.Context, order entity.Order) error 
 	}
 
 	accrualOrder, err := s.service.GetOrderAccrual(order.Number)
-	fmt.Println(accrualOrder)
 	if err != nil {
-		log.Error(err)
-		return common.ErrInternalError
+		if !errors.Is(err, common.ErrNonExistentOrder) {
+			log.Error(err)
+			return common.ErrInternalError
+		}
+		order.Status = entity.OrderNew
 	}
-	order.Status = accrualOrder.Status
-	order.Accrual = accrualOrder.Accrual
+
+	if order != (entity.Order{}) {
+		order.Status = accrualOrder.Status
+		order.Accrual = accrualOrder.Accrual
+	}
+
 	order.UploadedAt = time.Now().UTC()
 
 	err = s.repo.SaveOrder(ctx, order)

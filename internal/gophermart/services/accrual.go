@@ -23,9 +23,9 @@ func NewWorkerService(log *logger.Logger, url string) *AccrualService {
 }
 
 type accrualDto struct {
-	Order   string  `json:"order"`
-	Status  string  `json:"status"`
-	Accrual float32 `json:"accrual,omitempty"`
+	Order   string   `json:"order"`
+	Status  string   `json:"status"`
+	Accrual *float32 `json:"accrual,omitempty"`
 }
 
 func (s *AccrualService) GetOrderAccrual(number string) (entity.Order, error) {
