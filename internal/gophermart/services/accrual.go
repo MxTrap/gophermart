@@ -47,8 +47,12 @@ func (s *AccrualService) GetOrderAccrual(number string) (entity.Order, error) {
 }
 
 func (*AccrualService) mapDtoToOrder(dto accrualDto) entity.Order {
+	status := dto.Status
+	if status == "REGISTERED" {
+		status = entity.OrderNew
+	}
 	return entity.Order{
-		Status:  dto.Status,
+		Status:  status,
 		Accrual: dto.Accrual,
 	}
 }
