@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -78,13 +78,11 @@ func (s *OrderService) SaveOrder(ctx context.Context, order entity.Order) error 
 	}
 
 	accrualOrder, err := s.service.GetOrderAccrual(order.Number)
+	fmt.Println(accrualOrder)
 	if err != nil {
 		log.Error(err)
-		if !errors.Is(err, common.ErrNonExistentOrder) {
-			return common.ErrInternalError
-		}
+		return common.ErrInternalError
 	}
-
 	order.Status = accrualOrder.Status
 	order.Accrual = accrualOrder.Accrual
 	order.UploadedAt = time.Now().UTC()
