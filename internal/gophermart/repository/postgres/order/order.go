@@ -40,8 +40,12 @@ func (r *OrderRepository) Find(ctx context.Context, number string) (entity.Order
 		return order, nil
 	}
 	defer row.Close()
+	order, err = pgx.CollectOneRow(row, pgx.RowToStructByName[entity.Order])
+	if err == nil || errors.Is(err, pgx.ErrNoRows) {
+		return order, nil
+	}
 
-	return pgx.CollectOneRow(row, pgx.RowToStructByName[entity.Order])
+	return order, err
 }
 
 func (r *OrderRepository) Update(ctx context.Context, tx *pgx.Tx, order entity.Order) error {
