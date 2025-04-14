@@ -34,7 +34,7 @@ func (s *AccrualService) GetOrderAccrual(number string) (entity.Order, error) {
 		R().
 		SetResult(&order).
 		Get(fmt.Sprintf("%s/api/orders/%s", s.url, number))
-	fmt.Println(res.Result())
+	fmt.Println(order)
 
 	if err != nil {
 		return entity.Order{}, err
