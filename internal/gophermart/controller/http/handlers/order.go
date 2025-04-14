@@ -2,9 +2,11 @@ package routes
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
 
+	"github.com/MxTrap/gophermart/internal/gophermart/common"
 	"github.com/MxTrap/gophermart/internal/gophermart/controller/http/utils"
 	"github.com/MxTrap/gophermart/internal/gophermart/entity"
 	"github.com/go-chi/chi/v5"
@@ -55,7 +57,29 @@ func (h *orderHandler) SaveOrderHandler(w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	h.service.SaveOrder(r.Context(), entity.Order{UserID: userID, Number: string(body)})
-	w.WriteHeader(200)
+	order := entity.Order{UserID: userID, Number: string(body)}
 
+	err = h.service.SaveOrder(r.Context(), order)
+
+	if err == nil {
+		w.WriteHeader(http.StatusAccepted)
+		return
+	}
+
+	if errors.Is(err, common.ErrOrderAlreadyExist) {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	if errors.Is(err, common.ErrOrderRegisteredByAnother) {
+		w.WriteHeader(http.StatusConflict)
+		return
+	}
+
+	if errors.Is(err, common.ErrInvalidOrderNumber) {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
+
+	w.WriteHeader(http.StatusInternalServerError)
 }
