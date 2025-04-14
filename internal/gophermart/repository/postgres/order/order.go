@@ -36,17 +36,12 @@ func (r *OrderRepository) Save(ctx context.Context, order entity.Order) error {
 func (r *OrderRepository) Find(ctx context.Context, number string) (entity.Order, error) {
 	var order entity.Order
 	row, err := r.db.Query(ctx, selectByNumber, number)
+	if err != nil {
+		return order, nil
+	}
 	defer row.Close()
-	if err != nil {
-		return order, nil
-	}
 
-	order, err = pgx.CollectOneRow(row, pgx.RowToStructByName[entity.Order])
-	if err != nil {
-		return order, nil
-	}
-
-	return order, nil
+	return pgx.CollectOneRow(row, pgx.RowToStructByName[entity.Order])
 }
 
 func (r *OrderRepository) Update(ctx context.Context, tx *pgx.Tx, order entity.Order) error {
@@ -57,15 +52,13 @@ func (r *OrderRepository) Update(ctx context.Context, tx *pgx.Tx, order entity.O
 func (r *OrderRepository) GetAll(ctx context.Context, userID int64) ([]entity.Order, error) {
 	var orders []entity.Order
 	rows, err := r.db.Query(ctx, selectAllStmt, userID)
-	defer rows.Close()
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		return orders, err
 	}
+	defer rows.Close()
 
-	orders, err = pgx.CollectRows(rows, pgx.RowToStructByName[entity.Order])
-
-	return orders, nil
+	return pgx.CollectRows(rows, pgx.RowToStructByName[entity.Order])
 }

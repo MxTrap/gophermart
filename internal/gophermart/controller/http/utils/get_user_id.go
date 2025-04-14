@@ -3,11 +3,12 @@ package utils
 import (
 	"context"
 	"errors"
+
+	"github.com/MxTrap/gophermart/internal/gophermart/controller/http/middlewares"
 )
 
 func GetUserID(ctx context.Context) (int64, error) {
-	uid := ctx.Value("UserID")
-	userID, ok := uid.(int64)
+	userID, ok := ctx.Value(middlewares.UserIDKey("UserID")).(int64)
 	if !ok {
 		return 0, errors.New("unknown user id")
 	}

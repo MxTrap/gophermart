@@ -22,6 +22,8 @@ func NewAuhtorizationMiddleware(val tokenValidator) *AuhtorizationMiddleware {
 	}
 }
 
+type UserIDKey string
+
 func (m *AuhtorizationMiddleware) Validate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
@@ -35,7 +37,7 @@ func (m *AuhtorizationMiddleware) Validate(next http.Handler) http.Handler {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		ctx := context.WithValue(r.Context(), "UserID", userID)
+		ctx := context.WithValue(r.Context(), UserIDKey("UserID"), userID)
 		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)

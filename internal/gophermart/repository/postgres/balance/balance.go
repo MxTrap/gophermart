@@ -31,10 +31,10 @@ func (*BalanceRepository) Withdraw(ctx context.Context, tx *pgx.Tx, userID int64
 
 func (r *BalanceRepository) Get(ctx context.Context, userID int64) (entity.Balance, error) {
 	row, err := r.db.Query(ctx, selectStmt, userID)
-
 	if err != nil {
 		return entity.Balance{}, err
 	}
+	defer row.Close()
 
 	return pgx.CollectOneRow(row, pgx.RowToStructByName[entity.Balance])
 }

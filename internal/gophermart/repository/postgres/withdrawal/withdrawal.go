@@ -20,11 +20,10 @@ func NewWithdrawnRepo(db *pgxpool.Pool) *WithdrawnRepo {
 
 func (r *WithdrawnRepo) GetAll(ctx context.Context, userID int64) ([]entity.Withdrawal, error) {
 	rows, err := r.db.Query(ctx, selectStmt, userID)
-	defer rows.Close()
-
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	return pgx.CollectRows(rows, pgx.RowToStructByPos[entity.Withdrawal])
 }

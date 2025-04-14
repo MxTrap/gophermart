@@ -53,10 +53,11 @@ func (s UserRepository) collectUser(rows pgx.Rows) (entity.User, error) {
 func (s UserRepository) FindUserByID(ctx context.Context, userID int64) (entity.User, error) {
 	var user entity.User
 
-	row, err := s.db.Query(ctx, findByIdStmt, userID)
+	row, err := s.db.Query(ctx, findByIDStmt, userID)
 	if err != nil {
 		return user, storage.NewRepositoryError(repoName+"FindUserByID", err)
 	}
+	defer row.Close()
 
 	return s.collectUser(row)
 }
@@ -68,6 +69,7 @@ func (s UserRepository) FindUserByUsername(ctx context.Context, username string)
 	if err != nil {
 		return user, storage.NewRepositoryError(repoName+"FindUserByUsername", err)
 	}
+	defer row.Close()
 
 	return s.collectUser(row)
 }
