@@ -2,7 +2,6 @@ package routes
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -12,6 +11,7 @@ import (
 	"github.com/MxTrap/gophermart/internal/gophermart/controller/http/utils"
 	"github.com/MxTrap/gophermart/internal/gophermart/entity"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 )
 
 type orderService interface {
@@ -126,12 +126,6 @@ func (h *orderHandler) GetAllHandler(w http.ResponseWriter, r *http.Request) {
 		ordersDto = append(ordersDto, h.mapOrderToDTO(order))
 	}
 
-	body, err := json.Marshal(ordersDto)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	render.JSON(w, r, ordersDto)
 
-	w.WriteHeader(http.StatusOK)
-	w.Write(body)
 }
