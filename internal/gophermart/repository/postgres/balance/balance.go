@@ -2,6 +2,7 @@ package balance
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/MxTrap/gophermart/internal/gophermart/entity"
 	"github.com/jackc/pgx/v5"
@@ -19,8 +20,9 @@ func NewBalanceRepository(pool *pgxpool.Pool) *BalanceRepository {
 	}
 }
 
-func (*BalanceRepository) Increase(ctx context.Context, tx *pgx.Tx, userId int64, sum float32) error {
-	_, err := (*tx).Exec(ctx, increaseBalanceStmt, sum, userId)
+func (*BalanceRepository) Increase(ctx context.Context, tx *pgx.Tx, userID int64, sum float32) error {
+	fmt.Println(userID)
+	_, err := (*tx).Exec(ctx, increaseBalanceStmt, sum, userID)
 	return err
 }
 
