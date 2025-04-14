@@ -86,7 +86,7 @@ func (s *OrderService) SaveOrder(ctx context.Context, order entity.Order) error 
 		order.Status = entity.OrderNew
 	}
 
-	if order != (entity.Order{}) {
+	if accrualOrder != (entity.Order{}) {
 		order.Status = accrualOrder.Status
 		order.Accrual = accrualOrder.Accrual
 	}
