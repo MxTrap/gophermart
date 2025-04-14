@@ -30,20 +30,20 @@ type jwtService interface {
 	GenerateAccessToken(user entity.User, ttl time.Duration) (entity.Token, error)
 }
 
-type AuthService struct {
+type AuthUsecase struct {
 	log        *logger.Logger
 	userRepo   userRepo
 	jwtService jwtService
 	tokenTTL   time.Duration
 }
 
-func NewAuthService(
+func NewAuthUsecase(
 	logger *logger.Logger,
 	userRepo userRepo,
 	jwtService jwtService,
 	tokenTTL time.Duration,
-) *AuthService {
-	return &AuthService{
+) *AuthUsecase {
+	return &AuthUsecase{
 		log:        logger,
 		userRepo:   userRepo,
 		jwtService: jwtService,
@@ -51,7 +51,7 @@ func NewAuthService(
 	}
 }
 
-func (s *AuthService) RegisterNewUser(ctx context.Context, user entity.User) (entity.Token, error) {
+func (s *AuthUsecase) RegisterNewUser(ctx context.Context, user entity.User) (entity.Token, error) {
 	log := s.log.With("op", "AuthService.RegisterNewUser", "login", user.Login)
 	var token entity.Token
 
@@ -89,7 +89,7 @@ func (s *AuthService) RegisterNewUser(ctx context.Context, user entity.User) (en
 	return token, nil
 }
 
-func (s *AuthService) Login(ctx context.Context, user entity.User) (entity.Token, error) {
+func (s *AuthUsecase) Login(ctx context.Context, user entity.User) (entity.Token, error) {
 	log := s.log.With("op", "AuthService.Login", "login", user.Login)
 
 	var token entity.Token

@@ -2,6 +2,7 @@ package order
 
 import (
 	"context"
+	"errors"
 
 	"github.com/MxTrap/gophermart/internal/gophermart/entity"
 	"github.com/jackc/pgx/v5"
@@ -18,7 +19,7 @@ func NewOrderRepository(pool *pgxpool.Pool) *OrderRepository {
 	}
 }
 
-func (r *OrderRepository) SaveOrder(ctx context.Context, order entity.Order) error {
+func (r *OrderRepository) Save(ctx context.Context, order entity.Order) error {
 	_, err := r.db.Exec(
 		ctx,
 		insertStmt,
@@ -32,7 +33,7 @@ func (r *OrderRepository) SaveOrder(ctx context.Context, order entity.Order) err
 	return err
 }
 
-func (r *OrderRepository) FindOrder(ctx context.Context, number string) (entity.Order, error) {
+func (r *OrderRepository) Find(ctx context.Context, number string) (entity.Order, error) {
 	var order entity.Order
 	row, err := r.db.Query(ctx, selectByNumber, number)
 	if err != nil {
@@ -47,7 +48,22 @@ func (r *OrderRepository) FindOrder(ctx context.Context, number string) (entity.
 	return order, nil
 }
 
-func (r *OrderRepository) UpdateOrder(ctx context.Context, order entity.Order) error {
-	_, err := r.db.Exec(ctx, updateStmt, order.Status, order.Accrual, order.Number)
+func (r *OrderRepository) Update(ctx context.Context, tx pgx.Tx, order entity.Order) error {
+	_, err := tx.Exec(ctx, updateStmt, order.Status, order.Accrual, order.Number)
 	return err
+}
+
+func (r *OrderRepository) GetAll(ctx context.Context, userId int64) ([]entity.Order, error) {
+	var orders []entity.Order
+	rows, err := r.db.Query(ctx, selectAllStmt, userId)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return orders, err
+	}
+
+	orders, err = pgx.CollectRows(rows, pgx.RowToStructByName[entity.Order])
+
+	return orders, nil
 }

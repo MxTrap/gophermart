@@ -2,140 +2,82 @@ package usecase
 
 import (
 	"context"
-	"errors"
-	"strconv"
 	"time"
 
-	"github.com/MxTrap/gophermart/internal/gophermart/common"
 	"github.com/MxTrap/gophermart/internal/gophermart/entity"
 	"github.com/MxTrap/gophermart/logger"
 )
-
-type orderRepository interface {
-	SaveOrder(ctx context.Context, order entity.Order) error
-	FindOrder(ctx context.Context, number string) (entity.Order, error)
-	UpdateOrder(ctx context.Context, order entity.Order) error
-}
 
 type accrualService interface {
 	GetOrderAccrual(number string) (entity.Order, error)
 }
 
-type OrderService struct {
-	queue   common.Queue[string]
+type storageService interface {
+	Push(el entity.Order)
+	Get() *entity.Order
+}
+
+type orderBalanceRepo interface {
+	UpdateOrderBalance(ctx context.Context, order entity.Order) error
+}
+
+type OrderUsecase struct {
 	log     *logger.Logger
 	service accrualService
-	repo    orderRepository
+	storage storageService
+	orderBalanceRepo
 }
 
-func NewOrderService(log *logger.Logger, service accrualService, repo orderRepository) *OrderService {
-	return &OrderService{
-		queue:   common.Queue[string]{},
-		log:     log,
-		service: service,
-		repo:    repo,
+func NewOrderUsecase(
+	log *logger.Logger,
+	accrualSvc accrualService,
+	storage storageService,
+	repo orderBalanceRepo,
+) *OrderUsecase {
+	return &OrderUsecase{
+		log:              log,
+		service:          accrualSvc,
+		storage:          storage,
+		orderBalanceRepo: repo,
 	}
 }
 
-func (*OrderService) checkOrderNumber(number string) bool {
-	var sum int
-	parity := len(number) % 2
-	for i := range len(number) {
-		digit, _ := strconv.Atoi(string(number[i]))
-		if i%2 == parity {
-			digit *= 2
-			if digit > 9 {
-				digit -= 9
-			}
-		}
-		sum += digit
-	}
-	return sum%10 == 0
-
-}
-
-func (*OrderService) isTerminalStatus(status string) bool {
+func (*OrderUsecase) isTerminalStatus(status string) bool {
 	return status == entity.OrderInvalid || status == entity.OrderProcessed
 }
 
-func (s *OrderService) SaveOrder(ctx context.Context, order entity.Order) error {
-	log := s.log.With("op:", "OrderService.SaveOrder")
-	if !s.checkOrderNumber(order.Number) {
-		return common.ErrInvalidOrderNumber
-	}
-
-	existingOrder, err := s.repo.FindOrder(ctx, order.Number)
-	if err != nil {
-		log.Error(err)
-		return common.ErrInternalError
-	}
-
-	if existingOrder.Number != "" {
-		if existingOrder.UserID != order.UserID {
-			return common.ErrOrderRegisteredByAnother
-		}
-		return common.ErrOrderAlreadyExist
-	}
-
-	accrualOrder, err := s.service.GetOrderAccrual(order.Number)
-	if err != nil {
-		if !errors.Is(err, common.ErrNonExistentOrder) {
-			log.Error(err)
-			return common.ErrInternalError
-		}
-		order.Status = entity.OrderNew
-	}
-
-	if accrualOrder != (entity.Order{}) {
-		order.Status = accrualOrder.Status
-		order.Accrual = accrualOrder.Accrual
-	}
-
-	order.UploadedAt = time.Now().UTC()
-
-	err = s.repo.SaveOrder(ctx, order)
-	if err != nil {
-		log.Error(err)
-		return common.ErrInternalError
-	}
-
-	if !s.isTerminalStatus(order.Status) {
-		s.queue.Push(order.Number)
-	}
-
-	return nil
-}
-
-func (s *OrderService) worker(ctx context.Context, id int, job chan string) {
+func (s *OrderUsecase) worker(ctx context.Context, id int, job chan entity.Order) {
 	log := s.log.With("worker#", id)
-	const maxRettyCount = 3
+	const maxRetryCount = 3
+	const retryPause = 5
 outer:
-	for number := range job {
-		var order entity.Order
+	for order := range job {
+		var accrualOrder entity.Order
 		var err error
-		for i := range maxRettyCount {
-			order, err = s.service.GetOrderAccrual(number)
-			if s.isTerminalStatus(order.Status) {
-				order.Status = number
-				s.repo.UpdateOrder(ctx, order)
-				break outer
+		for i := range maxRetryCount {
+			accrualOrder, err = s.service.GetOrderAccrual(order.Number)
+			if accrualOrder.Status != order.Status {
+				accrualOrder.Number = order.Number
+				err := s.orderBalanceRepo.UpdateOrderBalance(ctx, accrualOrder)
+				if err != nil {
+					log.Error(err)
+				}
+				if s.isTerminalStatus(accrualOrder.Status) {
+					break outer
+				}
 			}
-			time.Sleep(time.Duration(i*2) * time.Second)
+			time.Sleep(time.Duration(i*retryPause) * time.Second)
 		}
 		if err != nil {
 			log.Error(err)
 		}
-		s.queue.Push(order.Status)
+		s.storage.Push(order)
 	}
 }
 
-func (s *OrderService) UpdateOrder(number string) {
-	s.queue.Push(number)
-}
-
-func (s *OrderService) Run(ctx context.Context) {
+func (s *OrderUsecase) Run(ctx context.Context) error {
 	const jobNum = 5
-	jobs := make(chan string, jobNum)
+	jobs := make(chan entity.Order, jobNum)
 	go func(ctx context.Context) {
 		for {
 			select {
@@ -143,8 +85,9 @@ func (s *OrderService) Run(ctx context.Context) {
 				close(jobs)
 				return
 			default:
-				if len(s.queue) >= 0 {
-					jobs <- s.queue.Deque()
+				order := s.storage.Get()
+				if order != nil {
+					jobs <- *order
 				}
 			}
 		}
@@ -153,4 +96,5 @@ func (s *OrderService) Run(ctx context.Context) {
 		go s.worker(ctx, i, jobs)
 	}
 
+	return nil
 }

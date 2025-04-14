@@ -11,7 +11,9 @@ import (
 	"github.com/MxTrap/gophermart/internal/gophermart/controller/http/middlewares"
 	"github.com/MxTrap/gophermart/internal/gophermart/migrator"
 	"github.com/MxTrap/gophermart/internal/gophermart/repository/postgres"
+	balance_repo "github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/balance"
 	order_repo "github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/order"
+	tran_repo "github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/transactional"
 	user_repo "github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/user"
 	"github.com/MxTrap/gophermart/internal/gophermart/services"
 	"github.com/MxTrap/gophermart/internal/gophermart/usecase"
@@ -21,6 +23,7 @@ import (
 type App struct {
 	pgStorage      *postgres.Storage
 	httpController *http.Controller
+	orderWorker    *usecase.OrderUsecase
 }
 
 func NewApp(ctx context.Context, log *logger.Logger, cfg *config.Config) (*App, error) {
@@ -40,26 +43,41 @@ func NewApp(ctx context.Context, log *logger.Logger, cfg *config.Config) (*App, 
 
 	userRepo := user_repo.NewUserRepository(storage.Pool)
 	orderRepo := order_repo.NewOrderRepository(storage.Pool)
+	balanceRepo := balance_repo.NewBalanceRepository(storage.Pool)
+	orderBalanceRepo := tran_repo.NewOrderBalanceRepo(storage.Pool, orderRepo, balanceRepo)
 
+	storageService := services.NewStorageService()
 	jwtService := services.NewJWTService("very secret")
-
+	orderService := services.NewOrderService(log, storageService, orderRepo)
 	accrualService := services.NewWorkerService(log, cfg.AccrualAddress)
 
-	authService := usecase.NewAuthService(log, userRepo, jwtService, 15*time.Hour)
-	orderService := usecase.NewOrderService(log, accrualService, orderRepo)
+	authUsecase := usecase.NewAuthUsecase(log, userRepo, jwtService, 15*time.Hour)
+	orderUsecase := usecase.NewOrderUsecase(log, accrualService, storageService, orderBalanceRepo)
 
 	httpController := http.NewController(cfg.HTTPAdress)
 	httpController.RegisterMiddlewares(middlewares.LoggerMiddleware(log))
-	authHandler := handlers.NewAuthHandler(authService)
+
+	authHandler := handlers.NewAuthHandler(authUsecase)
 	ordersHandler := handlers.NewOrdersHandler(middlewares.NewAuhtorizationMiddleware(jwtService), orderService)
 
 	httpController.AddHandler("/user", authHandler, ordersHandler)
 
-	return &App{pgStorage: storage, httpController: httpController}, nil
+	return &App{
+		pgStorage:      storage,
+		httpController: httpController,
+		orderWorker:    orderUsecase,
+	}, nil
 }
 
 func (a *App) Run(ctx context.Context) error {
-	return a.httpController.Start()
+	if err := a.httpController.Start(); err != nil {
+		return err
+	}
+
+	if err := a.orderWorker.Run(ctx); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (a *App) Stop(ctx context.Context) error {
