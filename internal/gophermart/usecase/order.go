@@ -57,6 +57,7 @@ outer:
 		for i := range maxRetryCount {
 			accrualOrder, err = s.service.GetOrderAccrual(order.Number)
 			if accrualOrder.Status != "" && accrualOrder.Status != order.Status {
+				accrualOrder.UserID = order.UserID
 				accrualOrder.Number = order.Number
 				err := s.orderBalanceRepo.UpdateOrderBalance(ctx, accrualOrder)
 				if err != nil {
