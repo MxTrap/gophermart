@@ -78,6 +78,7 @@ func (s *OrderService) SaveOrder(ctx context.Context, order entity.Order) error 
 	order.UploadedAt = time.Now().UTC()
 
 	err = s.orderRepo.Save(ctx, order)
+
 	if err != nil {
 		log.Error(err)
 		return common.ErrInternalError

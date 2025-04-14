@@ -56,7 +56,7 @@ outer:
 		var err error
 		for i := range maxRetryCount {
 			accrualOrder, err = s.service.GetOrderAccrual(order.Number)
-			if accrualOrder.Status != order.Status {
+			if accrualOrder.Status != "" && accrualOrder.Status != order.Status {
 				accrualOrder.Number = order.Number
 				err := s.orderBalanceRepo.UpdateOrderBalance(ctx, accrualOrder)
 				if err != nil {

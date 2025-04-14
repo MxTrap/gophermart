@@ -7,7 +7,7 @@ import (
 	"github.com/MxTrap/gophermart/config"
 
 	"github.com/MxTrap/gophermart/internal/gophermart/controller/http"
-	handlers "github.com/MxTrap/gophermart/internal/gophermart/controller/http/handlers"
+	"github.com/MxTrap/gophermart/internal/gophermart/controller/http/handlers"
 	"github.com/MxTrap/gophermart/internal/gophermart/controller/http/middlewares"
 	"github.com/MxTrap/gophermart/internal/gophermart/migrator"
 	"github.com/MxTrap/gophermart/internal/gophermart/repository/postgres"
@@ -70,13 +70,10 @@ func NewApp(ctx context.Context, log *logger.Logger, cfg *config.Config) (*App, 
 }
 
 func (a *App) Run(ctx context.Context) error {
-	if err := a.httpController.Start(); err != nil {
-		return err
-	}
+	go a.httpController.Start()
 
-	if err := a.orderWorker.Run(ctx); err != nil {
-		return err
-	}
+	go a.orderWorker.Run(ctx)
+
 	return nil
 }
 
