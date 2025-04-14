@@ -2,6 +2,7 @@ package combined
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/MxTrap/gophermart/internal/gophermart/entity"
 	"github.com/jackc/pgx/v5"
@@ -43,6 +44,7 @@ func (r *OrderBalanceRepo) UpdateOrderBalance(ctx context.Context, order entity.
 	}
 
 	if order.Accrual != nil {
+		fmt.Println(*order.Accrual)
 		err = r.balanceRepo.Increase(ctx, &tx, order.UserID, *order.Accrual)
 		if err != nil {
 			tx.Rollback(ctx)
