@@ -12,9 +12,10 @@ import (
 	"github.com/MxTrap/gophermart/internal/gophermart/migrator"
 	"github.com/MxTrap/gophermart/internal/gophermart/repository/postgres"
 	balance_repo "github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/balance"
+	"github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/combined"
 	order_repo "github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/order"
-	tran_repo "github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/transactional"
 	user_repo "github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/user"
+	withdrawal_repo "github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/withdrawal"
 	"github.com/MxTrap/gophermart/internal/gophermart/services"
 	"github.com/MxTrap/gophermart/internal/gophermart/usecase"
 	"github.com/MxTrap/gophermart/logger"
@@ -44,12 +45,16 @@ func NewApp(ctx context.Context, log *logger.Logger, cfg *config.Config) (*App, 
 	userRepo := user_repo.NewUserRepository(storage.Pool)
 	orderRepo := order_repo.NewOrderRepository(storage.Pool)
 	balanceRepo := balance_repo.NewBalanceRepository(storage.Pool)
-	orderBalanceRepo := tran_repo.NewOrderBalanceRepo(storage.Pool, orderRepo, balanceRepo)
+	withdrawalRepo := withdrawal_repo.NewWithdrawnRepo(storage.Pool)
+	orderBalanceRepo := combined.NewOrderBalanceRepo(storage.Pool, orderRepo, balanceRepo)
+	balanceWithdrawalRepo := combined.NewBalanceWithdrawnRepo(storage.Pool, balanceRepo, withdrawalRepo)
 
 	storageService := services.NewStorageService()
 	jwtService := services.NewJWTService("very secret")
 	orderService := services.NewOrderService(log, storageService, orderRepo)
+	balanceService := services.NewBalanceService(log, balanceRepo)
 	accrualService := services.NewWorkerService(log, cfg.AccrualAddress)
+	withdrawalService := services.NewWithdrawalService(log, balanceWithdrawalRepo, withdrawalRepo)
 
 	authUsecase := usecase.NewAuthUsecase(log, userRepo, jwtService, 15*time.Hour)
 	orderUsecase := usecase.NewOrderUsecase(log, accrualService, storageService, orderBalanceRepo)
@@ -57,10 +62,14 @@ func NewApp(ctx context.Context, log *logger.Logger, cfg *config.Config) (*App, 
 	httpController := http.NewController(cfg.HTTPAdress)
 	httpController.RegisterMiddlewares(middlewares.LoggerMiddleware(log))
 
-	authHandler := handlers.NewAuthHandler(authUsecase)
-	ordersHandler := handlers.NewOrdersHandler(middlewares.NewAuhtorizationMiddleware(jwtService), orderService)
+	authMiddleware := middlewares.NewAuhtorizationMiddleware(jwtService)
 
-	httpController.AddHandler("/user", authHandler, ordersHandler)
+	authHandler := handlers.NewAuthHandler(authUsecase)
+	ordersHandler := handlers.NewOrdersHandler(authMiddleware, orderService)
+	balanceHandler := handlers.NewBalanceHandler(authMiddleware, balanceService, withdrawalService)
+	withdrawalHander := handlers.NewWithdrawalHandler(authMiddleware, withdrawalService)
+
+	httpController.AddHandler("/user", authHandler, ordersHandler, balanceHandler, withdrawalHander)
 
 	return &App{
 		pgStorage:      storage,

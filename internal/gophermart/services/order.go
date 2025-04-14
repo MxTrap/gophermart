@@ -2,11 +2,11 @@ package services
 
 import (
 	"context"
-	"strconv"
 	"time"
 
 	"github.com/MxTrap/gophermart/internal/gophermart/common"
 	"github.com/MxTrap/gophermart/internal/gophermart/entity"
+	"github.com/MxTrap/gophermart/internal/utils"
 	"github.com/MxTrap/gophermart/logger"
 )
 
@@ -38,26 +38,9 @@ func NewOrderService(
 	}
 }
 
-func (*OrderService) checkOrderNumber(number string) bool {
-	var sum int
-	parity := len(number) % 2
-	for i := range len(number) {
-		digit, _ := strconv.Atoi(string(number[i]))
-		if i%2 == parity {
-			digit *= 2
-			if digit > 9 {
-				digit -= 9
-			}
-		}
-		sum += digit
-	}
-	return sum%10 == 0
-
-}
-
 func (s *OrderService) SaveOrder(ctx context.Context, order entity.Order) error {
-	log := s.log.With("op:OrderService.SaveOrder")
-	if !s.checkOrderNumber(order.Number) {
+	log := s.log.With("op", "OrderService.SaveOrder")
+	if !utils.IsOrderNumberValid(order.Number) {
 		return common.ErrInvalidOrderNumber
 	}
 
@@ -90,7 +73,7 @@ func (s *OrderService) SaveOrder(ctx context.Context, order entity.Order) error 
 }
 
 func (s *OrderService) GetAll(ctx context.Context, userId int64) ([]entity.Order, error) {
-	log := s.log.With("op:OrderService.GetAll")
+	log := s.log.With("op", "OrderService.GetAll")
 	orders, err := s.orderRepo.GetAll(ctx, userId)
 	if err != nil {
 		log.Error(err)

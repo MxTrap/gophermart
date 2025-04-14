@@ -1,4 +1,4 @@
-package transactional
+package combined
 
 import (
 	"context"
@@ -9,11 +9,11 @@ import (
 )
 
 type orderRepo interface {
-	Update(ctx context.Context, tx pgx.Tx, order entity.Order) error
+	Update(ctx context.Context, tx *pgx.Tx, order entity.Order) error
 }
 
 type balanceRepo interface {
-	Increase(ctx context.Context, tx pgx.Tx, userId int64, accrual float32) error
+	Increase(ctx context.Context, tx *pgx.Tx, userId int64, accrual float32) error
 }
 
 type OrderBalanceRepo struct {
@@ -36,14 +36,14 @@ func (r *OrderBalanceRepo) UpdateOrderBalance(ctx context.Context, order entity.
 		return err
 	}
 
-	err = r.orderRepo.Update(ctx, tx, order)
+	err = r.orderRepo.Update(ctx, &tx, order)
 	if err != nil {
 		tx.Rollback(ctx)
 		return err
 	}
 
 	if order.Accrual != nil {
-		err = r.balanceRepo.Increase(ctx, tx, order.UserID, *order.Accrual)
+		err = r.balanceRepo.Increase(ctx, &tx, order.UserID, *order.Accrual)
 		if err != nil {
 			tx.Rollback(ctx)
 			return err

@@ -48,8 +48,8 @@ func (r *OrderRepository) Find(ctx context.Context, number string) (entity.Order
 	return order, nil
 }
 
-func (r *OrderRepository) Update(ctx context.Context, tx pgx.Tx, order entity.Order) error {
-	_, err := tx.Exec(ctx, updateStmt, order.Status, order.Accrual, order.Number)
+func (r *OrderRepository) Update(ctx context.Context, tx *pgx.Tx, order entity.Order) error {
+	_, err := (*tx).Exec(ctx, updateStmt, order.Status, order.Accrual, order.Number)
 	return err
 }
 

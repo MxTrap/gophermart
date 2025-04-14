@@ -27,3 +27,5 @@ var (
 	ErrOrderRegisteredByAnother = errors.New("order registered by another user")
 	ErrNonExistentOrder         = errors.New("order does not exist")
 )
+
+var ErrInsufficientBalance = errors.New("insufficient balance")
