@@ -2,7 +2,7 @@ package order
 
 const selectAllStmt = `SELECT o.user_id, o.number, s.status, o.accrual, o.uploaded_at
 FROM orders AS o JOIN order_statuses AS s ON o.status_id = s.id
-WHERE user_id = $1;`
+WHERE user_id = $1 ORDER BY o.uploaded_at DESC;`
 
 const selectByNumber = `SELECT o.user_id, o.number, s.status, o.accrual, o.uploaded_at
 FROM orders AS o JOIN order_statuses AS s ON o.status_id = s.id

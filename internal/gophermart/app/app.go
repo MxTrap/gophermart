@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"github.com/go-chi/chi/v5/middleware"
 	"time"
 
 	"github.com/MxTrap/gophermart/config"
@@ -60,16 +61,19 @@ func NewApp(ctx context.Context, log *logger.Logger, cfg *config.Config) (*App, 
 	orderUsecase := usecase.NewOrderUsecase(log, accrualService, storageService, orderBalanceRepo)
 
 	httpController := http.NewController(cfg.HTTPAdress)
-	httpController.RegisterMiddlewares(middlewares.LoggerMiddleware(log))
+	httpController.RegisterMiddlewares(
+		middlewares.LoggerMiddleware(log),
+		middleware.Compress(5, "application/json"),
+	)
 
 	authMiddleware := middlewares.NewAuhtorizationMiddleware(jwtService)
 
 	authHandler := handlers.NewAuthHandler(authUsecase)
 	ordersHandler := handlers.NewOrdersHandler(authMiddleware, orderService)
 	balanceHandler := handlers.NewBalanceHandler(authMiddleware, balanceService, withdrawalService)
-	withdrawalHander := handlers.NewWithdrawalHandler(authMiddleware, withdrawalService)
+	withdrawalHandler := handlers.NewWithdrawalHandler(authMiddleware, withdrawalService)
 
-	httpController.AddHandler("/user", authHandler, ordersHandler, balanceHandler, withdrawalHander)
+	httpController.AddHandler("/user", authHandler, ordersHandler, balanceHandler, withdrawalHandler)
 
 	return &App{
 		pgStorage:      storage,
