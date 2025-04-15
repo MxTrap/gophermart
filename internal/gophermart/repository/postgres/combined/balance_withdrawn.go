@@ -20,16 +20,16 @@ type balance interface {
 }
 
 type BalanceWithdrawnRepo struct {
-	db    *pgxpool.Pool
-	bRepo balance
-	wRepo withdrawn
+	db             *pgxpool.Pool
+	balanceRepo    balance
+	withdrawalRepo withdrawn
 }
 
 func NewBalanceWithdrawnRepo(db *pgxpool.Pool, bRepo balance, wRepo withdrawn) *BalanceWithdrawnRepo {
 	return &BalanceWithdrawnRepo{
-		db:    db,
-		bRepo: bRepo,
-		wRepo: wRepo,
+		db:             db,
+		balanceRepo:    bRepo,
+		withdrawalRepo: wRepo,
 	}
 }
 
@@ -39,7 +39,7 @@ func (r *BalanceWithdrawnRepo) Withdraw(ctx context.Context, userID int64, withd
 		return err
 	}
 
-	err = r.bRepo.Withdraw(ctx, &tx, userID, withdrawal.Sum)
+	err = r.balanceRepo.Withdraw(ctx, &tx, userID, withdrawal.Sum)
 
 	if err != nil {
 		err := tx.Rollback(ctx)
@@ -53,7 +53,7 @@ func (r *BalanceWithdrawnRepo) Withdraw(ctx context.Context, userID int64, withd
 		return err
 	}
 
-	err = r.wRepo.Save(ctx, &tx, userID, withdrawal)
+	err = r.withdrawalRepo.Save(ctx, &tx, userID, withdrawal)
 	if err != nil {
 		err := tx.Rollback(ctx)
 		if err != nil {
