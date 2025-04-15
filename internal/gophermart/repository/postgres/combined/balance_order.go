@@ -38,14 +38,20 @@ func (r *OrderBalanceRepo) UpdateOrderBalance(ctx context.Context, order entity.
 
 	err = r.orderRepo.Update(ctx, &tx, order)
 	if err != nil {
-		tx.Rollback(ctx)
+		err := tx.Rollback(ctx)
+		if err != nil {
+			return err
+		}
 		return err
 	}
 
 	if order.Accrual != nil {
 		err = r.balanceRepo.Increase(ctx, &tx, order.UserID, *order.Accrual)
 		if err != nil {
-			tx.Rollback(ctx)
+			err := tx.Rollback(ctx)
+			if err != nil {
+				return err
+			}
 			return err
 		}
 	}

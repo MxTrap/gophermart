@@ -42,7 +42,10 @@ func (r *BalanceWithdrawnRepo) Withdraw(ctx context.Context, userID int64, withd
 	err = r.bRepo.Withdraw(ctx, &tx, userID, withdrawal.Sum)
 
 	if err != nil {
-		tx.Rollback(ctx)
+		err := tx.Rollback(ctx)
+		if err != nil {
+			return err
+		}
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23514" {
 			return common.ErrInsufficientBalance
@@ -52,7 +55,10 @@ func (r *BalanceWithdrawnRepo) Withdraw(ctx context.Context, userID int64, withd
 
 	err = r.wRepo.Save(ctx, &tx, userID, withdrawal)
 	if err != nil {
-		tx.Rollback(ctx)
+		err := tx.Rollback(ctx)
+		if err != nil {
+			return err
+		}
 		return err
 	}
 

@@ -1,4 +1,4 @@
-package usecase
+package services
 
 import (
 	"context"
@@ -30,28 +30,28 @@ type jwtService interface {
 	GenerateAccessToken(user entity.User, ttl time.Duration) (entity.Token, error)
 }
 
-type AuthUsecase struct {
-	log        *logger.Logger
-	userRepo   userRepo
-	jwtService jwtService
-	tokenTTL   time.Duration
+type AuthService struct {
+	log      *logger.Logger
+	userRepo userRepo
+	jwtSvc   jwtService
+	tokenTTL time.Duration
 }
 
-func NewAuthUsecase(
+func NewAuthService(
 	logger *logger.Logger,
 	userRepo userRepo,
-	jwtService jwtService,
+	jwtSvc jwtService,
 	tokenTTL time.Duration,
-) *AuthUsecase {
-	return &AuthUsecase{
-		log:        logger,
-		userRepo:   userRepo,
-		jwtService: jwtService,
-		tokenTTL:   tokenTTL,
+) *AuthService {
+	return &AuthService{
+		log:      logger,
+		userRepo: userRepo,
+		jwtSvc:   jwtSvc,
+		tokenTTL: tokenTTL,
 	}
 }
 
-func (s *AuthUsecase) RegisterNewUser(ctx context.Context, user entity.User) (entity.Token, error) {
+func (s *AuthService) RegisterNewUser(ctx context.Context, user entity.User) (entity.Token, error) {
 	log := s.log.With("op", "AuthService.RegisterNewUser", "login", user.Login)
 	var token entity.Token
 
@@ -80,7 +80,7 @@ func (s *AuthUsecase) RegisterNewUser(ctx context.Context, user entity.User) (en
 		return token, common.ErrInternalError
 	}
 	user.ID = id
-	token, err = s.jwtService.GenerateAccessToken(user, s.tokenTTL)
+	token, err = s.jwtSvc.GenerateAccessToken(user, s.tokenTTL)
 	if err != nil {
 		log.Error("failed to generate tokens", err)
 		return token, err
@@ -89,30 +89,30 @@ func (s *AuthUsecase) RegisterNewUser(ctx context.Context, user entity.User) (en
 	return token, nil
 }
 
-func (s *AuthUsecase) Login(ctx context.Context, user entity.User) (entity.Token, error) {
+func (s *AuthService) Login(ctx context.Context, user entity.User) (entity.Token, error) {
 	log := s.log.With("op", "AuthService.Login", "login", user.Login)
 
 	var token entity.Token
 
 	existingUser, err := s.userRepo.FindUserByUsername(ctx, user.Login)
-	log.Info("Try to login with", existingUser.ID, existingUser.Login)
+
 	if err != nil {
 		if errors.Is(err, common.ErrUserNotFound) {
 			log.Info("user not found", err)
 			return token, common.ErrInvalidCredentials
 		}
 
-		log.Error("failed to find user", err)
+		log.Error(err)
 		return token, common.ErrInternalError
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(existingUser.Password), []byte(user.Password)); err != nil {
-		log.Info("invalid credentials", err)
+		log.Info("invalid password", err)
 
 		return token, common.ErrInvalidCredentials
 	}
 
-	token, err = s.jwtService.GenerateAccessToken(existingUser, s.tokenTTL)
+	token, err = s.jwtSvc.GenerateAccessToken(existingUser, s.tokenTTL)
 	if err != nil {
 		log.Error("failed to generate tokens", err)
 		return token, common.ErrInternalError

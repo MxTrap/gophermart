@@ -18,23 +18,20 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	app, err := app.NewApp(ctx, log, cfg)
+	newApp, err := app.NewApp(ctx, log, cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
-	go func() {
-		err := app.Run(ctx)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}()
+	go newApp.Run(ctx)
 
-	log.Info("started")
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
 	<-sig
-	app.Stop(ctx)
+	err = newApp.Stop(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
 	cancel()
 
 }

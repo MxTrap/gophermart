@@ -18,14 +18,14 @@ import (
 	user_repo "github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/user"
 	withdrawal_repo "github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/withdrawal"
 	"github.com/MxTrap/gophermart/internal/gophermart/services"
-	"github.com/MxTrap/gophermart/internal/gophermart/usecase"
 	"github.com/MxTrap/gophermart/logger"
 )
 
 type App struct {
 	pgStorage      *postgres.Storage
 	httpController *http.Controller
-	orderWorker    *usecase.OrderUsecase
+	orderWorker    *services.OrderWorkerService
+	logger         *logger.Logger
 }
 
 func NewApp(ctx context.Context, log *logger.Logger, cfg *config.Config) (*App, error) {
@@ -50,15 +50,14 @@ func NewApp(ctx context.Context, log *logger.Logger, cfg *config.Config) (*App, 
 	orderBalanceRepo := combined.NewOrderBalanceRepo(storage.Pool, orderRepo, balanceRepo)
 	balanceWithdrawalRepo := combined.NewBalanceWithdrawnRepo(storage.Pool, balanceRepo, withdrawalRepo)
 
-	storageService := services.NewStorageService()
-	jwtService := services.NewJWTService("very secret")
-	orderService := services.NewOrderService(log, storageService, orderRepo)
-	balanceService := services.NewBalanceService(log, balanceRepo)
-	accrualService := services.NewWorkerService(log, cfg.AccrualAddress)
-	withdrawalService := services.NewWithdrawalService(log, balanceWithdrawalRepo, withdrawalRepo)
-
-	authUsecase := usecase.NewAuthUsecase(log, userRepo, jwtService, 15*time.Hour)
-	orderUsecase := usecase.NewOrderUsecase(log, accrualService, storageService, orderBalanceRepo)
+	storageSvc := services.NewStorageService()
+	jwtSvc := services.NewJWTService("very secret")
+	orderSvc := services.NewOrderService(log, storageSvc, orderRepo)
+	balanceSvc := services.NewBalanceService(log, balanceRepo)
+	accrualSvc := services.NewWorkerService(log, cfg.AccrualAddress)
+	withdrawalSvc := services.NewWithdrawalService(log, balanceWithdrawalRepo, withdrawalRepo)
+	authSvc := services.NewAuthService(log, userRepo, jwtSvc, 15*time.Hour)
+	orderWorkerSvc := services.NewOrderWorkerService(log, accrualSvc, storageSvc, orderBalanceRepo)
 
 	httpController := http.NewController(cfg.HTTPAdress)
 	httpController.RegisterMiddlewares(
@@ -66,28 +65,33 @@ func NewApp(ctx context.Context, log *logger.Logger, cfg *config.Config) (*App, 
 		middleware.Compress(5, "application/json"),
 	)
 
-	authMiddleware := middlewares.NewAuhtorizationMiddleware(jwtService)
+	authMiddleware := middlewares.NewAuhtorizationMiddleware(jwtSvc)
 
-	authHandler := handlers.NewAuthHandler(authUsecase)
-	ordersHandler := handlers.NewOrdersHandler(authMiddleware, orderService)
-	balanceHandler := handlers.NewBalanceHandler(authMiddleware, balanceService, withdrawalService)
-	withdrawalHandler := handlers.NewWithdrawalHandler(authMiddleware, withdrawalService)
+	authHandler := handlers.NewAuthHandler(authSvc)
+	ordersHandler := handlers.NewOrdersHandler(authMiddleware, orderSvc)
+	balanceHandler := handlers.NewBalanceHandler(authMiddleware, balanceSvc, withdrawalSvc)
+	withdrawalHandler := handlers.NewWithdrawalHandler(authMiddleware, withdrawalSvc)
 
 	httpController.AddHandler("/user", authHandler, ordersHandler, balanceHandler, withdrawalHandler)
 
 	return &App{
 		pgStorage:      storage,
 		httpController: httpController,
-		orderWorker:    orderUsecase,
+		orderWorker:    orderWorkerSvc,
+		logger:         log,
 	}, nil
 }
 
-func (a *App) Run(ctx context.Context) error {
-	go a.httpController.Start()
+func (a *App) Run(ctx context.Context) {
+	go func() {
+		err := a.httpController.Start()
+		if err != nil {
+			a.logger.Fatal(err)
+		}
+	}()
 
 	go a.orderWorker.Run(ctx)
-
-	return nil
+	a.logger.Info("App started")
 }
 
 func (a *App) Stop(ctx context.Context) error {
@@ -96,6 +100,7 @@ func (a *App) Stop(ctx context.Context) error {
 		return err
 	}
 	a.pgStorage.Stop()
+	a.logger.Info("App stopped")
 
 	return nil
 }
