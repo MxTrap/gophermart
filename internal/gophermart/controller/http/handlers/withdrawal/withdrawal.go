@@ -1,4 +1,4 @@
-package handlers
+package withdrawal
 
 import (
 	"context"
@@ -18,6 +18,10 @@ type withdrawer interface {
 
 type withdrawalHandler struct {
 	svc withdrawer
+}
+
+type authMiddleware interface {
+	Validate(next http.Handler) http.Handler
 }
 
 func NewWithdrawalHandler(

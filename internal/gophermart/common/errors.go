@@ -16,9 +16,8 @@ var (
 )
 
 var (
-	ErrUsernameAlreadyExist = errors.New("user already exist")
-	ErrUserNotFound         = errors.New("user not found")
-	ErrUserAlreadyExist     = errors.New("user already exist")
+	ErrUserNotFound     = errors.New("user not found")
+	ErrUserAlreadyExist = errors.New("user already exist")
 )
 
 var (

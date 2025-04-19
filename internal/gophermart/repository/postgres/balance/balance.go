@@ -6,31 +6,34 @@ import (
 
 	"github.com/MxTrap/gophermart/internal/gophermart/entity"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+type db interface {
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+}
+
 type BalanceRepository struct {
-	db *pgxpool.Pool
+	db db
 }
 
 const repoName = "postgres.BalanceRepo."
 
-func NewBalanceRepository(pool *pgxpool.Pool) *BalanceRepository {
+func NewBalanceRepository(pool db) *BalanceRepository {
 	return &BalanceRepository{
 		db: pool,
 	}
 }
 
-func (*BalanceRepository) Increase(ctx context.Context, tx *pgx.Tx, userID int64, sum float32) error {
-	_, err := (*tx).Exec(ctx, increaseBalanceStmt, sum, userID)
+func (*BalanceRepository) Increase(ctx context.Context, tx pgx.Tx, userID int64, sum float32) error {
+	_, err := tx.Exec(ctx, increaseBalanceStmt, sum, userID)
 	if err != nil {
 		return storage.NewRepositoryError(repoName+"Increase", err)
 	}
 	return nil
 }
 
-func (*BalanceRepository) Withdraw(ctx context.Context, tx *pgx.Tx, userID int64, sum float32) error {
-	_, err := (*tx).Exec(ctx, withdrawalStmt, sum, userID)
+func (*BalanceRepository) Withdraw(ctx context.Context, tx pgx.Tx, userID int64, sum float32) error {
+	_, err := tx.Exec(ctx, withdrawalStmt, sum, userID)
 	if err != nil {
 		return storage.NewRepositoryError(repoName+"Withdraw", err)
 	}

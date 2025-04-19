@@ -37,8 +37,8 @@ func (r *WithdrawnRepo) GetAll(ctx context.Context, userID int64) ([]entity.With
 	return withdrawals, nil
 }
 
-func (*WithdrawnRepo) Save(ctx context.Context, tx *pgx.Tx, userID int64, withdrawn entity.Withdrawal) error {
-	_, err := (*tx).Exec(ctx, insertStmt, userID, withdrawn.Order, withdrawn.Sum, withdrawn.ProcessedAt)
+func (*WithdrawnRepo) Save(ctx context.Context, tx pgx.Tx, userID int64, withdrawn entity.Withdrawal) error {
+	_, err := tx.Exec(ctx, insertStmt, userID, withdrawn.Order, withdrawn.Sum, withdrawn.ProcessedAt)
 	if err != nil {
 		return storage.NewRepositoryError(repoName+"Save", err)
 	}

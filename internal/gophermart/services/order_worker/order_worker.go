@@ -1,4 +1,4 @@
-package services
+package order_worker
 
 import (
 	"context"

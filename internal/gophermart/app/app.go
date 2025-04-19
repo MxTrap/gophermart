@@ -2,39 +2,49 @@ package app
 
 import (
 	"context"
+	authhandler "github.com/MxTrap/gophermart/internal/gophermart/controller/http/handlers/auth"
+	balancehandler "github.com/MxTrap/gophermart/internal/gophermart/controller/http/handlers/balance"
+	orderhandler "github.com/MxTrap/gophermart/internal/gophermart/controller/http/handlers/order"
+	withdrawalhandler "github.com/MxTrap/gophermart/internal/gophermart/controller/http/handlers/withdrawal"
+	"github.com/MxTrap/gophermart/internal/gophermart/services/accrual"
+	"github.com/MxTrap/gophermart/internal/gophermart/services/auth"
+	"github.com/MxTrap/gophermart/internal/gophermart/services/balance"
+	"github.com/MxTrap/gophermart/internal/gophermart/services/jwt"
+	"github.com/MxTrap/gophermart/internal/gophermart/services/order"
+	"github.com/MxTrap/gophermart/internal/gophermart/services/order_worker"
+	"github.com/MxTrap/gophermart/internal/gophermart/services/storage"
+	"github.com/MxTrap/gophermart/internal/gophermart/services/withdrawal"
 	"github.com/go-chi/chi/v5/middleware"
 	"time"
 
 	"github.com/MxTrap/gophermart/config"
 
 	"github.com/MxTrap/gophermart/internal/gophermart/controller/http"
-	"github.com/MxTrap/gophermart/internal/gophermart/controller/http/handlers"
 	"github.com/MxTrap/gophermart/internal/gophermart/controller/http/middlewares"
 	"github.com/MxTrap/gophermart/internal/gophermart/migrator"
 	"github.com/MxTrap/gophermart/internal/gophermart/repository/postgres"
-	balance_repo "github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/balance"
+	balancerepo "github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/balance"
 	"github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/combined"
-	order_repo "github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/order"
-	user_repo "github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/user"
-	withdrawal_repo "github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/withdrawal"
-	"github.com/MxTrap/gophermart/internal/gophermart/services"
+	orderrepo "github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/order"
+	userrepo "github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/user"
+	withdrawalrepo "github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/withdrawal"
 	"github.com/MxTrap/gophermart/logger"
 )
 
 type App struct {
 	pgStorage      *postgres.Storage
 	httpController *http.Controller
-	orderWorker    *services.OrderWorkerService
+	orderWorker    *order_worker.OrderWorkerService
 	logger         *logger.Logger
 }
 
 func NewApp(ctx context.Context, log *logger.Logger, cfg *config.Config) (*App, error) {
-	storage, err := postgres.NewPostgresStorage(ctx, cfg.DatabaseDSN)
+	postgresStorage, err := postgres.NewPostgresStorage(ctx, cfg.DatabaseDSN)
 	if err != nil {
 		return nil, err
 	}
 
-	mgrtr, err := migrator.NewMigrator(storage.Pool)
+	mgrtr, err := migrator.NewMigrator(postgresStorage.Pool)
 	if err != nil {
 		return nil, err
 	}
@@ -43,21 +53,21 @@ func NewApp(ctx context.Context, log *logger.Logger, cfg *config.Config) (*App, 
 		return nil, err
 	}
 
-	userRepo := user_repo.NewUserRepository(storage.Pool)
-	orderRepo := order_repo.NewOrderRepository(storage.Pool)
-	balanceRepo := balance_repo.NewBalanceRepository(storage.Pool)
-	withdrawalRepo := withdrawal_repo.NewWithdrawnRepo(storage.Pool)
-	orderBalanceRepo := combined.NewOrderBalanceRepo(storage.Pool, orderRepo, balanceRepo)
-	balanceWithdrawalRepo := combined.NewBalanceWithdrawnRepo(storage.Pool, balanceRepo, withdrawalRepo)
+	userRepo := userrepo.NewUserRepository(postgresStorage.Pool)
+	orderRepo := orderrepo.NewOrderRepository(postgresStorage.Pool)
+	balanceRepo := balancerepo.NewBalanceRepository(postgresStorage.Pool)
+	withdrawalRepo := withdrawalrepo.NewWithdrawnRepo(postgresStorage.Pool)
+	orderBalanceRepo := combined.NewOrderBalanceRepo(postgresStorage.Pool, orderRepo, balanceRepo)
+	balanceWithdrawalRepo := combined.NewBalanceWithdrawnRepo(postgresStorage.Pool, balanceRepo, withdrawalRepo)
 
-	storageSvc := services.NewStorageService()
-	jwtSvc := services.NewJWTService("very secret")
-	orderSvc := services.NewOrderService(log, storageSvc, orderRepo)
-	balanceSvc := services.NewBalanceService(log, balanceRepo)
-	accrualSvc := services.NewWorkerService(log, cfg.AccrualAddress)
-	withdrawalSvc := services.NewWithdrawalService(log, balanceWithdrawalRepo, withdrawalRepo)
-	authSvc := services.NewAuthService(log, userRepo, jwtSvc, 15*time.Hour)
-	orderWorkerSvc := services.NewOrderWorkerService(log, accrualSvc, storageSvc, orderBalanceRepo)
+	storageSvc := storage.NewStorageService()
+	jwtSvc := jwt.NewJWTService("very secret")
+	orderSvc := order.NewOrderService(log, storageSvc, orderRepo)
+	balanceSvc := balance.NewBalanceService(log, balanceRepo)
+	accrualSvc := accrual.NewAccrualService(log, cfg.AccrualAddress)
+	withdrawalSvc := withdrawal.NewWithdrawalService(log, balanceWithdrawalRepo, withdrawalRepo)
+	authSvc := auth.NewAuthService(log, userRepo, jwtSvc, 15*time.Hour)
+	orderWorkerSvc := order_worker.NewOrderWorkerService(log, accrualSvc, storageSvc, orderBalanceRepo)
 
 	httpController := http.NewController(cfg.HTTPAdress)
 	httpController.RegisterMiddlewares(
@@ -67,15 +77,15 @@ func NewApp(ctx context.Context, log *logger.Logger, cfg *config.Config) (*App, 
 
 	authMiddleware := middlewares.NewAuhtorizationMiddleware(jwtSvc)
 
-	authHandler := handlers.NewAuthHandler(authSvc)
-	ordersHandler := handlers.NewOrdersHandler(authMiddleware, orderSvc)
-	balanceHandler := handlers.NewBalanceHandler(authMiddleware, balanceSvc, withdrawalSvc)
-	withdrawalHandler := handlers.NewWithdrawalHandler(authMiddleware, withdrawalSvc)
+	authHandler := authhandler.NewAuthHandler(authSvc)
+	ordersHandler := orderhandler.NewOrdersHandler(authMiddleware, orderSvc)
+	balanceHandler := balancehandler.NewBalanceHandler(authMiddleware, balanceSvc, withdrawalSvc)
+	withdrawalHandler := withdrawalhandler.NewWithdrawalHandler(authMiddleware, withdrawalSvc)
 
 	httpController.AddHandler("/user", authHandler, ordersHandler, balanceHandler, withdrawalHandler)
 
 	return &App{
-		pgStorage:      storage,
+		pgStorage:      postgresStorage,
 		httpController: httpController,
 		orderWorker:    orderWorkerSvc,
 		logger:         log,

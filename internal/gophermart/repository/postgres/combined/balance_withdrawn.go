@@ -12,11 +12,11 @@ import (
 )
 
 type withdrawn interface {
-	Save(ctx context.Context, tx *pgx.Tx, userID int64, withdrawn entity.Withdrawal) error
+	Save(ctx context.Context, tx pgx.Tx, userID int64, withdrawn entity.Withdrawal) error
 }
 
 type balance interface {
-	Withdraw(ctx context.Context, tx *pgx.Tx, userID int64, sum float32) error
+	Withdraw(ctx context.Context, tx pgx.Tx, userID int64, sum float32) error
 }
 
 type BalanceWithdrawnRepo struct {
@@ -39,7 +39,7 @@ func (r *BalanceWithdrawnRepo) Withdraw(ctx context.Context, userID int64, withd
 		return err
 	}
 
-	err = r.balanceRepo.Withdraw(ctx, &tx, userID, withdrawal.Sum)
+	err = r.balanceRepo.Withdraw(ctx, tx, userID, withdrawal.Sum)
 
 	if err != nil {
 		err := tx.Rollback(ctx)
@@ -53,7 +53,7 @@ func (r *BalanceWithdrawnRepo) Withdraw(ctx context.Context, userID int64, withd
 		return err
 	}
 
-	err = r.withdrawalRepo.Save(ctx, &tx, userID, withdrawal)
+	err = r.withdrawalRepo.Save(ctx, tx, userID, withdrawal)
 	if err != nil {
 		err := tx.Rollback(ctx)
 		if err != nil {

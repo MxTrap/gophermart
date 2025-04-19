@@ -1,4 +1,4 @@
-package handlers
+package balance
 
 import (
 	"context"
@@ -21,6 +21,10 @@ type balanceService interface {
 
 type withdrawalService interface {
 	Withdraw(ctx context.Context, userID int64, withdrawal entity.Withdrawal) error
+}
+
+type authMiddleware interface {
+	Validate(next http.Handler) http.Handler
 }
 
 type balanceHandler struct {
@@ -62,7 +66,7 @@ func (h *balanceHandler) GetBalance(w http.ResponseWriter, r *http.Request) {
 	balanceDTO := struct {
 		Current   float32 `json:"Current"`
 		Withdrawn float32 `json:"withdrawn"`
-	}{Current: balance.Balance, Withdrawn: balance.Withdrawn}
+	}{Current: balance.Current, Withdrawn: balance.Withdrawn}
 
 	render.JSON(w, r, balanceDTO)
 }

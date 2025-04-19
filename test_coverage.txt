@@ -1,0 +1,32 @@
+?       github.com/MxTrap/gophermart/internal/gophermart/common [no test files]
+        github.com/MxTrap/gophermart/internal/gophermart/app            coverage: 0.0% of statements
+        github.com/MxTrap/gophermart/cmd/gophermart             coverage: 0.0% of statements
+        github.com/MxTrap/gophermart/config             coverage: 0.0% of statements
+?       github.com/MxTrap/gophermart/internal/gophermart/entity [no test files]
+        github.com/MxTrap/gophermart/internal/gophermart/migrator               coverage: 0.0% of statements
+        github.com/MxTrap/gophermart/internal/gophermart/mocks          coverage: 0.0% of statements
+        github.com/MxTrap/gophermart/internal/gophermart/repository/postgres            coverage: 0.0% of statements
+        github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/balance            coverage: 0.0% of statements
+        github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/order              coverage: 0.0% of statements
+        github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/user               coverage: 0.0% of statements
+        github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/withdrawal         coverage: 0.0% of statements
+ok      github.com/MxTrap/gophermart/internal/gophermart/controller/http        1.342s  coverage: 100.0% of statements
+ok      github.com/MxTrap/gophermart/internal/gophermart/controller/http/handlers/auth  0.969s  coverage: 97.3% of statements
+ok      github.com/MxTrap/gophermart/internal/gophermart/controller/http/handlers/balance       0.786s  coverage: 78.9% of statements
+ok      github.com/MxTrap/gophermart/internal/gophermart/controller/http/handlers/order 0.606s  coverage: 84.3% of statements
+ok      github.com/MxTrap/gophermart/internal/gophermart/controller/http/handlers/withdrawal    1.465s  coverage: 75.0% of statements
+ok      github.com/MxTrap/gophermart/internal/gophermart/controller/http/middlewares    0.981s  coverage: 46.4% of statements
+ok      github.com/MxTrap/gophermart/internal/gophermart/controller/http/utils  1.629s  coverage: 100.0% of statements
+ok      github.com/MxTrap/gophermart/internal/gophermart/repository     1.429s  coverage: 100.0% of statements
+ok      github.com/MxTrap/gophermart/internal/gophermart/repository/postgres/combined   1.377s  coverage: 47.5% of statements
+ok      github.com/MxTrap/gophermart/internal/gophermart/services/accrual       1.450s  coverage: 100.0% of statements
+ok      github.com/MxTrap/gophermart/internal/gophermart/services/auth  2.036s  coverage: 95.1% of statements
+ok      github.com/MxTrap/gophermart/internal/gophermart/services/balance       1.491s  coverage: 100.0% of statements
+ok      github.com/MxTrap/gophermart/internal/gophermart/services/jwt   1.633s  coverage: 89.3% of statements
+ok      github.com/MxTrap/gophermart/internal/gophermart/services/order 1.393s  coverage: 100.0% of statements
+ok      github.com/MxTrap/gophermart/internal/gophermart/services/order_worker  1.721s  coverage: 94.9% of statements
+ok      github.com/MxTrap/gophermart/internal/gophermart/services/storage       1.319s  coverage: 100.0% of statements
+ok      github.com/MxTrap/gophermart/internal/gophermart/services/withdrawal    1.274s  coverage: 100.0% of statements
+ok      github.com/MxTrap/gophermart/internal/utils     1.028s  coverage: 84.6% of statements
+ok      github.com/MxTrap/gophermart/logger     0.979s  coverage: 100.0% of statements
+61.2%

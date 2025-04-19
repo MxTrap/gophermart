@@ -1,6 +1,7 @@
-package services
+package jwt
 
 import (
+	"errors"
 	"time"
 
 	"github.com/MxTrap/gophermart/internal/gophermart/common"
@@ -41,20 +42,13 @@ func (s JwtService) Parse(token entity.Token) (int64, error) {
 	})
 
 	if err != nil {
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			return 0, common.ErrTokenHasExpired
+		}
 		return 0, err
 	}
 
 	if !parsedToken.Valid {
-		return 0, common.ErrInvalidToken
-	}
-
-	expTime, err := parsedToken.Claims.GetExpirationTime()
-
-	if err != nil {
-		return 0, err
-	}
-
-	if expTime.Unix() < time.Now().Unix() {
 		return 0, common.ErrInvalidToken
 	}
 

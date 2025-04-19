@@ -1,4 +1,4 @@
-package services
+package storage
 
 import (
 	"github.com/MxTrap/gophermart/internal/gophermart/entity"
@@ -25,7 +25,7 @@ func (s *Storage) Get(elemCount int) []entity.Order {
 		return el
 	}
 	if len(self) > elemCount {
-		el, *s.queue = self[:elemCount+1], self[elemCount+1:]
+		el, *s.queue = self[:elemCount], self[elemCount:]
 		return el
 	}
 

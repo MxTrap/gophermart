@@ -1,6 +1,7 @@
-package services
+package accrual
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -15,7 +16,7 @@ type AccrualService struct {
 	url string
 }
 
-func NewWorkerService(log *logger.Logger, url string) *AccrualService {
+func NewAccrualService(log *logger.Logger, url string) *AccrualService {
 	return &AccrualService{
 		log: log,
 		url: url,
@@ -41,6 +42,10 @@ func (s *AccrualService) GetOrderAccrual(number string) (entity.Order, error) {
 
 	if res.StatusCode() == http.StatusNoContent {
 		return entity.Order{}, common.ErrNonExistentOrder
+	}
+
+	if res.StatusCode() != http.StatusOK {
+		return entity.Order{}, errors.New(res.Status())
 	}
 
 	return s.mapDtoToOrder(order), nil

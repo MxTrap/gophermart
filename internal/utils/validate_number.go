@@ -3,6 +3,10 @@ package utils
 import "strconv"
 
 func IsOrderNumberValid(number string) bool {
+	if number == "" {
+		return false
+	}
+
 	var sum int
 	parity := len(number) % 2
 	for i := range len(number) {
