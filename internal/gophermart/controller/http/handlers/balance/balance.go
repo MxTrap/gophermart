@@ -64,7 +64,7 @@ func (h *balanceHandler) GetBalance(w http.ResponseWriter, r *http.Request) {
 	}
 
 	balanceDTO := struct {
-		Current   float32 `json:"Balance"`
+		Current   float32 `json:"current"`
 		Withdrawn float32 `json:"withdrawn"`
 	}{Current: balance.Balance, Withdrawn: balance.Withdrawn}
 

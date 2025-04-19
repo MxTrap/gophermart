@@ -52,6 +52,9 @@ func TestController_RegisterMiddlewares(t *testing.T) {
 	go ctrl.Start()
 
 	resp, err := http.Get("http://" + host)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
 	defer resp.Body.Close()
 	ctrl.Stop(context.Background())
 
