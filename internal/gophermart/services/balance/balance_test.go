@@ -28,9 +28,9 @@ func TestBalanceService_Get(t *testing.T) {
 			setupMock: func(repo *mocks.MockBalanceRepository) {
 				repo.EXPECT().
 					Get(ctx, userID).
-					Return(entity.Balance{Current: 100.0, Withdrawn: 20.0}, nil)
+					Return(entity.Balance{Balance: 100.0, Withdrawn: 20.0}, nil)
 			},
-			expectedBalance: entity.Balance{Current: 100.0, Withdrawn: 20.0},
+			expectedBalance: entity.Balance{Balance: 100.0, Withdrawn: 20.0},
 			expectedErr:     nil,
 		},
 		{

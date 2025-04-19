@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -25,7 +25,7 @@ func TestNewController(t *testing.T) {
 }
 
 func TestController_RegisterMiddlewares(t *testing.T) {
-	host := "localhost:8080"
+	host := "localhost:8086"
 	ctrl := NewController(host)
 
 	called := 0
@@ -52,6 +52,7 @@ func TestController_RegisterMiddlewares(t *testing.T) {
 	go ctrl.Start()
 
 	resp, err := http.Get("http://" + host)
+	defer resp.Body.Close()
 	ctrl.Stop(context.Background())
 
 	assert.NoError(t, err)
@@ -116,7 +117,7 @@ func TestController_registerHandlers(t *testing.T) {
 func readResponseBody(resp *http.Response) []byte {
 	var body []byte
 	if resp.Body != nil {
-		body, _ = ioutil.ReadAll(resp.Body)
+		body, _ = io.ReadAll(resp.Body)
 		resp.Body.Close()
 	}
 	return body

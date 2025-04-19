@@ -30,7 +30,7 @@ func (r *MockRows) Scan(dest ...interface{}) error {
 	}
 	b := r.data[r.index]
 	if len(dest) == 2 {
-		dest[0] = &b.Current
+		dest[0] = &b.Balance
 		dest[1] = &b.Withdrawn
 	}
 	return nil
@@ -41,7 +41,7 @@ func (r *MockRows) Values() ([]interface{}, error) {
 		return nil, errors.New("no rows")
 	}
 	b := r.data[r.index]
-	return []interface{}{b.Current, b.Withdrawn}, nil
+	return []interface{}{b.Balance, b.Withdrawn}, nil
 }
 
 func (r *MockRows) FieldDescriptions() []pgconn.FieldDescription {

@@ -3,7 +3,7 @@ package entity
 import "time"
 
 type Balance struct {
-	Current   float32
+	Balance   float32
 	Withdrawn float32
 }
 

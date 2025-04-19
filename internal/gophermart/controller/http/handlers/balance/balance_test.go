@@ -26,7 +26,7 @@ func TestBalanceHandler_GetBalance(t *testing.T) {
 
 	userID := int64(123)
 	balance := entity.Balance{
-		Current:   100.50,
+		Balance:   100.50,
 		Withdrawn: 50.25,
 	}
 
@@ -45,12 +45,12 @@ func TestBalanceHandler_GetBalance(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rr.Code)
 
 		var response struct {
-			Current   float32 `json:"Current"`
+			Current   float32 `json:"Balance"`
 			Withdrawn float32 `json:"withdrawn"`
 		}
 		err := json.Unmarshal(rr.Body.Bytes(), &response)
 		assert.NoError(t, err)
-		assert.Equal(t, balance.Current, response.Current)
+		assert.Equal(t, balance.Balance, response.Current)
 		assert.Equal(t, balance.Withdrawn, response.Withdrawn)
 	})
 

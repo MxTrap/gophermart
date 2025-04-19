@@ -1,4 +1,4 @@
-package order_worker
+package orderworker
 
 import (
 	"context"

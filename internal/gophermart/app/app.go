@@ -11,7 +11,7 @@ import (
 	"github.com/MxTrap/gophermart/internal/gophermart/services/balance"
 	"github.com/MxTrap/gophermart/internal/gophermart/services/jwt"
 	"github.com/MxTrap/gophermart/internal/gophermart/services/order"
-	"github.com/MxTrap/gophermart/internal/gophermart/services/order_worker"
+	"github.com/MxTrap/gophermart/internal/gophermart/services/orderworker"
 	"github.com/MxTrap/gophermart/internal/gophermart/services/storage"
 	"github.com/MxTrap/gophermart/internal/gophermart/services/withdrawal"
 	"github.com/go-chi/chi/v5/middleware"
@@ -34,7 +34,7 @@ import (
 type App struct {
 	pgStorage      *postgres.Storage
 	httpController *http.Controller
-	orderWorker    *order_worker.OrderWorkerService
+	orderWorker    *orderworker.OrderWorkerService
 	logger         *logger.Logger
 }
 
@@ -67,7 +67,7 @@ func NewApp(ctx context.Context, log *logger.Logger, cfg *config.Config) (*App, 
 	accrualSvc := accrual.NewAccrualService(log, cfg.AccrualAddress)
 	withdrawalSvc := withdrawal.NewWithdrawalService(log, balanceWithdrawalRepo, withdrawalRepo)
 	authSvc := auth.NewAuthService(log, userRepo, jwtSvc, 15*time.Hour)
-	orderWorkerSvc := order_worker.NewOrderWorkerService(log, accrualSvc, storageSvc, orderBalanceRepo)
+	orderWorkerSvc := orderworker.NewOrderWorkerService(log, accrualSvc, storageSvc, orderBalanceRepo)
 
 	httpController := http.NewController(cfg.HTTPAdress)
 	httpController.RegisterMiddlewares(

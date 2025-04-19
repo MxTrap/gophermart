@@ -2,7 +2,6 @@ package storage
 
 import (
 	"errors"
-	"reflect"
 	"testing"
 )
 
@@ -30,7 +29,7 @@ func TestNewRepositoryError(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewRepositoryError(tt.args.operation, tt.args.err); !reflect.DeepEqual(got, tt.want) {
+			if got := NewRepositoryError(tt.args.operation, tt.args.err); got.Error() != tt.want.Error() {
 				t.Errorf("NewRepositoryError() = %v, want %v", got, tt.want)
 			}
 		})

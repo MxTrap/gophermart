@@ -2,7 +2,7 @@
 // Source: order_worker_test.go
 
 // Package services is a generated GoMock package.
-package order_worker
+package orderworker
 
 import (
 	context "context"
